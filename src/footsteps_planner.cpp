@@ -14,21 +14,15 @@ void FootStepGen::Init(std::string supportFootName,
 
   std::chrono::high_resolution_clock::time_point t_clock = std::chrono::high_resolution_clock::now();
 
-  plan_.clear();
+  
   plan_.support_foot(P_f0);
   N_steps = -1;
   supportFoot = supportFootName;
   v_inputs_ = V;
-
   P_traj_.clear();
   P_traj_.push_back(IntegrateVelProfile(0));
-  for(int i = 0; i < 3; i++)
-  {
-    if(std::abs(P_traj_.back().pose()(i)) < 1e-5)
-    {
-      P_traj_.back().pose_(i) = 0;
-    }
-  }
+
+
   for(int k = 1; k < (int)v_inputs_.size(); k++)
   {
     P_traj_.push_back(IntegrateVelProfile(k));
@@ -51,7 +45,7 @@ void FootStepGen::Init(std::string supportFootName,
 
   // mc_rtc::log::info("Sizes at start");
   // mc_rtc::log::info(P_traj_.size());
-  // mc_rtc::log::info(Vx_.size());
+  // mc_rtc::log::info(v_inputs_.size());
 
   // mc_rtc::log::info(P_f_0.z());
   std::chrono::duration<double, std::milli> time_span = std::chrono::high_resolution_clock::now() - t_clock;
@@ -113,7 +107,7 @@ void FootStepGen::GetStepsTimings()
             ref_traj_point P_f_i(steps_inputs_[kfoot].pose(),steps_inputs_[kfoot].ori());
 
             ref_traj_point P_f_i_pl(P_f_i.pose() + sva::RotZ(-P_f_i.ori()).block(0,0,2,2) * Eigen::Vector2d{0, l_ / 2} , P_f_i.ori());
-            ref_traj_point P_f_i_ml(P_f_i.pose() + sva::RotZ(-P_f_i.ori()).block(0,0,2,2) * Eigen::Vector2d{0, - l_ / 2} , P_f_i.ori());
+            ref_traj_point P_f_i_ml(P_f_i.pose() - sva::RotZ(-P_f_i.ori()).block(0,0,2,2) * Eigen::Vector2d{0, l_ / 2} , P_f_i.ori());
 
             if((P_f_i.pose() - P_f_im1.pose()).norm() < 1)
             {
@@ -461,13 +455,11 @@ Footsteps_plan FootStepGen::compute_plan()
 
   GetStepsTimings();
 
-  Theta_f_.resize(F_ + 1, 1);
-  Theta_f_(0) = plan_.support_foot().ori();
+  Theta_f_.resize(F_, 1);
 
-
-  if(F_ <= 1)
+  if(F_ <= 0)
   {
-    mc_rtc::log::error_and_throw<std::runtime_error>("[Steps Generation] No step to compute");
+    mc_rtc::log::error_and_throw<std::runtime_error>("[footstepsplanner::compute_plan] No step to compute");
     return plan_;
   }
 
@@ -486,9 +478,9 @@ Footsteps_plan FootStepGen::compute_plan()
 
     if(k == 0)
     {
-      Dtheta_vel(k) = P_traj_[StepsTimings_indx_[k]].ori() - Theta_f_(0) + Theta_f_(0);
-      Dtheta_upper_lim(k) += Theta_f_(0);
-      Dtheta_lower_lim(k) += Theta_f_(0);
+      Dtheta_vel(k) = P_traj_[StepsTimings_indx_[k]].ori() - plan_.support_foot().ori() + plan_.support_foot().ori();
+      Dtheta_upper_lim(k) += plan_.support_foot().ori();
+      Dtheta_lower_lim(k) += plan_.support_foot().ori();
     }
 
     else
@@ -546,11 +538,11 @@ Footsteps_plan FootStepGen::compute_plan()
     }
     if(std::abs(theta(k)) > M_PI)
     {
-      Theta_f_(k + 1) = theta(k) - (theta(k) / std::abs(theta(k))) * 2 * M_PI;
+      Theta_f_(k) = theta(k) - (theta(k) / std::abs(theta(k))) * 2 * M_PI;
     }
     else
     {
-      Theta_f_(k + 1) = theta(k);
+      Theta_f_(k) = theta(k);
     }
   }
 
@@ -581,10 +573,10 @@ Footsteps_plan FootStepGen::compute_plan()
   R_Theta_0 = sva::RotZ(-theta_0).block(0, 0, 2, 2);
 
   Dpos_vel[0] = (P_traj_[StepsTimings_indx_[0]].pose() - P_traj_[0].pose()) 
-              + sgn * R_Theta_0 * Eigen::Vector2d{0, l_ / 2} 
+              + sgn * R_Theta_0 * Eigen::Vector2d{0, l_} 
               + plan_.support_foot().pose(); 
 
-  Admissible_Region Kinematic_Rectangle(Eigen::Vector3d{0, 0, Theta_f_(0)}, Eigen::Vector3d{d_h_x, d_h_y, 0});
+  Admissible_Region Kinematic_Rectangle(Eigen::Vector3d{0, 0, plan_.support_foot().ori()}, Eigen::Vector3d{d_h_x, d_h_y, 0});
 
   Eigen::VectorXd bcstr = Kinematic_Rectangle.Offset
                           + Kinematic_Rectangle.Polygone_Normals.transpose()
@@ -595,22 +587,24 @@ Footsteps_plan FootStepGen::compute_plan()
 
   for(int k = 1; k < F_; k++)
   {
-
-    double theta_k = P_traj_[StepsTimings_indx_[k - 1]].ori();
-
-    Eigen::Vector3d Integral = P_traj_[StepsTimings_indx_[k]].vec3_pose() - P_traj_[StepsTimings_indx_[k - 1]].vec3_pose();
-    Dpos_vel[k] = Eigen::Vector2d{Integral.x(), Integral.y()};
-
+    
+    double theta_k = P_traj_[StepsTimings_indx_[k]].ori();
+    double theta_f_km1 = Theta_f_(k-1);
+    Dpos_vel[k] = P_traj_[StepsTimings_indx_[k]].pose() - P_traj_[StepsTimings_indx_[k-1]].pose();
+ 
+  
     Eigen::Matrix2d R_Theta_k;
     R_Theta_k = sva::RotZ(-theta_k).block(0, 0, 2, 2);
 
-    Dpos_vel[k] += sgn * (1 - 2 * ((k % 2))) * R_Theta_k * Eigen::Vector2d{0, l_ / 2};
+    Dpos_vel[k] += sgn * (1 - 2 * (((k) % 2))) * R_Theta_k * Eigen::Vector2d{0, l_};
 
-    Kinematic_Rectangle = Admissible_Region(Eigen::Vector3d{0, 0, Theta_f_(k)}, Eigen::Vector3d{d_h_x, d_h_y, 0});
-    R_Theta_k = sva::RotZ(-Theta_f_(k - 1)).block(0, 0, 2, 2);
+    
+     
+    Kinematic_Rectangle = Admissible_Region(Eigen::Vector3d{0, 0, theta_f_km1}, Eigen::Vector3d{d_h_x, d_h_y, 0});
+    Eigen::Matrix2d R_Theta_f_km1 = sva::RotZ(-theta_f_km1).block(0, 0, 2, 2);
 
     bcstr = Kinematic_Rectangle.Offset
-            + sgn * (1 - 2 * ((k % 2))) * Kinematic_Rectangle.Polygone_Normals.transpose() * R_Theta_k
+            + sgn * (1 - 2 * (((k) % 2))) * Kinematic_Rectangle.Polygone_Normals.transpose() * R_Theta_f_km1
                   * Eigen::Vector2d{0, l_};
 
     Normal_Vec.push_back(Kinematic_Rectangle.Polygone_Normals.transpose());
@@ -694,13 +688,14 @@ Footsteps_plan FootStepGen::compute_plan()
     mc_rtc::log::error("Step QP failed");
   }
 
-  // mc_rtc::log::info("Step out {}",XY);
-
+  // mc_rtc::log::info("Step out F {}\n{}",F_,XY);
+  
+  plan_.clear();
   for(int k = 0; k < F_; k++)
   {
     double xf = XY(2 * k);
     double yf = XY(2 * k + 1);
-    plan_.push_back(Footstep(Eigen::Vector2d{xf , yf} , Theta_f_(k),StepsTimings_[k],Eigen::Vector2d{0.1,0.1}));
+    plan_.add(Footstep(Eigen::Vector2d{xf , yf} , Theta_f_(k),StepsTimings_[k],Eigen::Vector2d{0.1,0.1}));
   }
   // mc_rtc::log::success("Position OK");
   std::chrono::duration<double, std::milli> time_span = std::chrono::high_resolution_clock::now() - t_clock;
@@ -780,32 +775,34 @@ ref_traj_point FootStepGen::IntegrateVelProfile(int k_end)
     return P_traj_[k_end];
   }
 
-  Eigen::Vector3d Output(plan_.support_foot().vec3_pose()); Output.z() = plan_.support_foot().ori();
+  ref_traj_point Output(plan_.support_foot().pose(),plan_.support_foot().ori());
   if(P_traj_.size() == 0)
   {
 
     if(supportFoot == "RightFoot")
     {
-      Output += l_ / 2 * Eigen::Vector3d{-sin(Output.z()), cos(Output.z()), 0};
+      Output.pose_ += sva::RotZ(-Output.ori_).block(0,0,2,2) * Eigen::Vector2d{0, l_ / 2}  ;
     }
     else
     {
-      Output -= l_ / 2 * Eigen::Vector3d{-sin(Output.z()), cos(Output.z()), 0};
+      Output.pose_ -= sva::RotZ(-Output.ori_).block(0,0,2,2) * Eigen::Vector2d{0, l_ / 2}  ;
     }
+    
   }
   else
   {
-    Output = P_traj_.back().vec3_pose();
+    Output.pose_ = P_traj_.back().pose();
+    Output.ori_ = P_traj_.back().ori();
     k_start = P_traj_.size() - 1;
   }
 
   for(int i = k_start; i < std::min(k_end, (int) v_inputs_.size()); i++)
   {
-    Output.z() += v_inputs_[i].angular().z() * delta_;
-    Output += sva::RotZ(-Output.z()) * v_inputs_[i].linear() * delta_;
+    Output.ori_ += v_inputs_[i].angular().z() * delta_;
+    Output.pose_ += sva::RotZ(-Output.ori_).block(0,0,2,2) * v_inputs_[i].linear().segment(0,2) * delta_;
   }
 
-  return ref_traj_point(Output.segment(0,2), Output.z());
+  return Output;
 }
 
 int FootStepGen::Get_ki(int k, int kfoot)

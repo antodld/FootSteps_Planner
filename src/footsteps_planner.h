@@ -15,7 +15,7 @@ namespace footsteps_planner
 struct Admissible_Region {
 
     public :
-        Admissible_Region();
+        Admissible_Region() = default;
         Admissible_Region(const Eigen::Vector3d & center,const Eigen::Vector3d & size){
             _center = center; _angle = _center.z(); _size = size; _size.z() = 0;
             _center.z() = 0;
@@ -81,7 +81,7 @@ struct Admissible_Region {
 struct Steps_timings_output{
 
     public :
-        Steps_timings_output(){};
+        Steps_timings_output() = default;
         ~Steps_timings_output() = default;
         bool QPsuccess;
         Eigen::VectorXd Ts;
@@ -91,6 +91,7 @@ struct Steps_timings_output{
 
 struct ref_traj_point{
 
+    ref_traj_point() = default;
     ref_traj_point(Eigen::Vector2d pose , double ori)
     {
         pose_ = pose;
@@ -99,7 +100,7 @@ struct ref_traj_point{
     ref_traj_point(sva::PTransformd pose)
     {
         pose_ = pose.translation().segment(0,2);
-        ori_ = mc_rbdyn::rpyFromMat(pose.rotation()).z();
+        ori_  = -mc_rbdyn::rpyFromMat(pose.rotation()).z();
     }
     ~ref_traj_point() = default;
 
@@ -113,7 +114,7 @@ struct ref_traj_point{
     }
     sva::PTransformd PT_pose() {
         Eigen::Vector3d center{pose_.x(),pose_.y(),0.};
-        return sva::PTransformd(sva::RotZ(ori_) , center);
+        return sva::PTransformd(sva::RotZ(-ori_) , center);
     }
     const double ori()
     {
@@ -135,7 +136,7 @@ struct ref_traj_point{
 struct Footstep : public mc_plugin::footsteps_planner::ref_traj_point{
 
     public:
-        Footstep();
+        Footstep() = default;
         Footstep(const sva::PTransformd & pose, double ts , const Eigen::Vector2d & step_size) : mc_plugin::footsteps_planner::ref_traj_point(pose)
         {
             ts_ = ts;
@@ -178,7 +179,7 @@ struct Footsteps_plan{
 
     public:
     
-        Footsteps_plan();
+        Footsteps_plan() = default;
         inline Footsteps_plan(const Footstep & support_foot , const Footstep & initial_swing_foot , const std::vector<Footstep> & footsteps)
         {
             footsteps_ = footsteps;
@@ -187,7 +188,7 @@ struct Footsteps_plan{
         }
         ~Footsteps_plan() = default;
 
-        void push_back(const Footstep & step)
+        void add(const Footstep & step)
         {
             footsteps_.push_back(step);
         }

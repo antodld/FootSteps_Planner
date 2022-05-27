@@ -7,6 +7,7 @@ footsteps_planner_plugin::~footsteps_planner_plugin() = default;
 
 void footsteps_planner_plugin::init(mc_control::MCGlobalController & controller, const mc_rtc::Configuration & config)
 {
+  std::cout << "[footsteps_planner_plugin] initialize" << std::endl;
   controller.controller().datastore().make<mc_rtc::Configuration>("footsteps_planner::planner_config");
   controller.controller().datastore().make<std::vector<sva::MotionVecd>>("footsteps_planner::input_vel");
   controller.controller().datastore().make<std::vector<sva::PTransformd>>("footsteps_planner::input_steps");
@@ -19,6 +20,8 @@ void footsteps_planner_plugin::init(mc_control::MCGlobalController & controller,
   controller.controller().datastore().make_call("footstep_planner::compute_plan" , [this](mc_rtc::DataStore* datastore){compute_footsteps_plan(datastore);});
 
   planner_ = mc_plugin::footsteps_planner::FootStepGen(config);
+
+  gui(controller);
 
   mc_rtc::log::info("footsteps_planner::init called with configuration:\n{}", config.dump(true, true));
 }
@@ -41,19 +44,28 @@ void footsteps_planner_plugin::after(mc_control::MCGlobalController & controller
 void footsteps_planner_plugin::compute_footsteps_plan(mc_rtc::DataStore* datastore)
 {
 
-  mc_plugin::footsteps_planner::Footstep support_footstep(support_foot_pose_,0,Eigen::Vector2d::Ones() * 0.1);
+  auto & support_foot_pose  = datastore->get<sva::PTransformd>("footsteps_planner::support_foot_pose");
+  auto & input_footsteps_pose = datastore->get<std::vector<sva::PTransformd>>("footsteps_planner::input_steps");
+  auto & input_v = datastore->get<std::vector<sva::MotionVecd>>("footsteps_planner::input_vel");
+  auto & input_t_steps = datastore->get<std::vector<double>>("footsteps_planner::input_time_steps");
+  auto & support_foot_name = datastore->get<std::string>("footsteps_planner::support_foot_name");
+
+  mc_plugin::footsteps_planner::Footstep support_footstep(support_foot_pose,0,Eigen::Vector2d::Ones() * 0.1);
   std::vector<mc_plugin::footsteps_planner::Footstep> input_footsteps;
-  for (int k = 0 ; k < input_steps_.size() ; k++)
+  
+  for (int k = 0 ; k < input_footsteps_pose.size() ; k++)
   {
-    input_footsteps.push_back(mc_plugin::footsteps_planner::Footstep(input_steps_[k],0,Eigen::Vector2d::Ones() * 0.1));
+    input_footsteps.push_back(mc_plugin::footsteps_planner::Footstep(input_footsteps_pose[k],0,Eigen::Vector2d::Ones() * 0.1));
   }
-  planner_.Init(support_foot_name_,
+
+  planner_.Init(support_foot_name,
                 support_footstep,
-                input_v_,
-                input_t_steps_,
+                input_v,
+                input_t_steps,
                 input_footsteps);
   
   planner_.compute_plan();
+
 
   datastore->assign<std::vector<sva::PTransformd>>("footsteps_planner::output_steps",planner_.footsteps_plan().steps_PTpose());
   datastore->assign<std::vector<double>>("footsteps_planner::output_time_steps",planner_.footsteps_plan().steps_timings());
@@ -64,13 +76,17 @@ void footsteps_planner_plugin::gui(mc_control::MCGlobalController & controller)
 {
   
   controller.controller().gui()->addElement(
-      {"footstep"},
+      {"Footsteps Planner"},
       mc_rtc::gui::Trajectory("Trajectory", mc_rtc::gui::Color(1., 1., 0.),
                               [this]() -> std::vector<Eigen::Vector3d>  { return planner_.Ref_Traj(); }),
 
       mc_rtc::gui::Polygon(
-      "Steps", mc_rtc::gui::Color(1., 0.3, 0.),
-      [this]() -> const std::vector<std::vector<Eigen::Vector3d>>  { return this->planner_.footsteps_plan().get_steps_corners(); })                      
+      "Steps", mc_rtc::gui::Color(0., 1., 0.),
+      [this]() -> std::vector<std::vector<Eigen::Vector3d>>  { return this->planner_.footsteps_plan().get_steps_corners(); }) 
+     
+      // mc_rtc::gui::Point3D(
+      // "Steps", mc_rtc::gui::Color(0., 1., 0.),
+      // [this]() -> std::vector<Eigen::Vector3d>  { return this->planner_.footsteps_plan().steps_pose(); })                 
                               
       );
 
