@@ -1,1 +1,9 @@
 ---
+Tp: 6
+delta: 0.05
+Ts_limit: [0.7,2]
+kinematics_cstr: [0.3,0.05]
+feet_distance: 0.2
+mean_speed: 0.1
+robot_height: 150
+max_rotation: 0.32

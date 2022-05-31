@@ -478,7 +478,7 @@ Footsteps_plan FootStepGen::compute_plan()
 
     if(k == 0)
     {
-      Dtheta_vel(k) = P_traj_[StepsTimings_indx_[k]].ori() - plan_.support_foot().ori() + plan_.support_foot().ori();
+      Dtheta_vel(k) = P_traj_[StepsTimings_indx_[k]].ori() - P_traj_[0].ori() + plan_.support_foot().ori();
       Dtheta_upper_lim(k) += plan_.support_foot().ori();
       Dtheta_lower_lim(k) += plan_.support_foot().ori();
     }
@@ -507,6 +507,7 @@ Footsteps_plan FootStepGen::compute_plan()
       Aeq(k, k) = 1;
       beq(k) = theta_cstr;
     }
+  
   }
 
   Aineq.resize(2 * Delta.rows(), F_);
@@ -522,8 +523,8 @@ Footsteps_plan FootStepGen::compute_plan()
     M(i, i - 1) = -1;
   }
   Eigen::VectorXd b = Dtheta_vel;
-  Q_ = Eigen::MatrixXd::Identity(F_, F_) * 1e-12 + (M.transpose() * M);
-  p_ = (-M.transpose() * b);
+  Q_ = Eigen::MatrixXd::Identity(F_, F_) * 1e-12 + (Delta.transpose() * Delta);
+  p_ = (-Delta.transpose() * b);
   Eigen::VectorXd theta = solveQP();
   if(!QPsuccess)
   {
@@ -532,10 +533,7 @@ Footsteps_plan FootStepGen::compute_plan()
 
   for(int k = 0; k < theta.size(); k++)
   {
-    if(std::abs(theta(k)) < 1e-4)
-    {
-      theta(k) = 0;
-    }
+
     if(std::abs(theta(k)) > M_PI)
     {
       Theta_f_(k) = theta(k) - (theta(k) / std::abs(theta(k))) * 2 * M_PI;
@@ -546,8 +544,9 @@ Footsteps_plan FootStepGen::compute_plan()
     }
   }
 
+  // mc_rtc::log::info("Theta o ori {}",plan_.support_foot().ori());
   // mc_rtc::log::info("Theta out {}",Theta_f_);
-
+  // mc_rtc::log::info(b);
   // std::cout << "Theta" << std::endl;
 
   // Solving QP 2 For placement
@@ -564,7 +563,7 @@ Footsteps_plan FootStepGen::compute_plan()
   }
 
   std::vector<Eigen::VectorXd> cstr_vec;
-  std::vector<Eigen::MatrixXd> Normal_Vec;
+  std::vector<Eigen::MatrixX2d> Normal_Vec;
 
   std::vector<Eigen::Vector2d> Dpos_vel(F_); // Integral of the speed between two steps
 

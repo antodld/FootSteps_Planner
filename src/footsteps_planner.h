@@ -16,8 +16,20 @@ struct Admissible_Region {
 
     public :
         Admissible_Region() = default;
+
+        Admissible_Region(sva::PTransformd center , const Eigen::Vector2d & size )
+        {
+     
+            compute_region(center.translation().segment(0,2) ,mc_rbdyn::rpyFromMat(center.rotation()).z() , size );
+
+        }
         Admissible_Region(const Eigen::Vector3d & center,const Eigen::Vector3d & size){
-            _center = center; _angle = _center.z(); _size = size; _size.z() = 0;
+           compute_region(center.segment(0,2),center.z(),size.segment(0,2));
+        }
+        void compute_region(const Eigen::Vector2d & center , double angle , const Eigen::Vector2d & size)
+        {
+
+            _center.segment(0,2) = center; _angle = angle; _size.segment(0,2) = size; _size.z() = 0;
             _center.z() = 0;
             R.setZero();
             R(0,0) = cos(_angle) ; R(0,1) = -sin(_angle);
@@ -100,7 +112,7 @@ struct ref_traj_point{
     ref_traj_point(sva::PTransformd pose)
     {
         pose_ = pose.translation().segment(0,2);
-        ori_  = -mc_rbdyn::rpyFromMat(pose.rotation()).z();
+        ori_  = mc_rbdyn::rpyFromMat(pose.rotation()).z();
     }
     ~ref_traj_point() = default;
 
@@ -114,7 +126,7 @@ struct ref_traj_point{
     }
     sva::PTransformd PT_pose() {
         Eigen::Vector3d center{pose_.x(),pose_.y(),0.};
-        return sva::PTransformd(sva::RotZ(-ori_) , center);
+        return sva::PTransformd(sva::RotZ(ori_) , center);
     }
     const double ori()
     {
@@ -374,7 +386,7 @@ struct FootStepGen {
         double Ts_min_ = 0.8 ; //Step Time lenght limits
         double Ts_max_ = 2; //Step Time lenght limits
         double l_ = 0.2; //Distance between foot
-        double Tp_ = 3; // Preview horizon time
+        double Tp_ = 6; // Preview horizon time
         double delta_ = 5e-2; //t_k - t_k-1
         double d_h_x = 0.2; //Next step tolerance zone
         double d_h_y = 0.05; //Next step tolerance zone
