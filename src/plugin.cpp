@@ -40,7 +40,7 @@ void footsteps_planner_plugin::reset(mc_control::MCGlobalController & controller
   mc_rtc::log::info("footsteps_planner::reset called");
 }
 
-void footsteps_planner_plugin::before(mc_control::MCGlobalController &)
+void footsteps_planner_plugin::before(mc_control::MCGlobalController & controller)
 {
   mc_rtc::log::info("footsteps_planner::before");
 }
