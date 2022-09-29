@@ -5,7 +5,7 @@ namespace mc_plugin
 namespace footsteps_planner
 {
 
-void FootStepGen::Init(std::string supportFootName,
+void FootStepGen::init(std::string supportFootName,
                        Footstep P_f0,
                        const std::vector<sva::MotionVecd> & V,
                        const std::vector<double> & Tstep,
@@ -14,6 +14,8 @@ void FootStepGen::Init(std::string supportFootName,
 
   std::chrono::high_resolution_clock::time_point t_clock = std::chrono::high_resolution_clock::now();
 
+  
+  plan_.support_foot_name(supportFootName);
   plan_.support_foot(P_f0);
   N_steps = -1;
   supportFoot = supportFootName;
@@ -44,7 +46,6 @@ void FootStepGen::Init(std::string supportFootName,
   // mc_rtc::log::info(P_traj_.size());
   // mc_rtc::log::info(v_inputs_.size());
 
-  // mc_rtc::log::info(P_f_0.z());
   std::chrono::duration<double, std::milli> time_span = std::chrono::high_resolution_clock::now() - t_clock;
   double ProcessTime = time_span.count();
   // mc_rtc::log::success("FootSteps Initialized in : " + std::to_string(ProcessTime));
@@ -455,7 +456,7 @@ Steps_timings_output FootStepGen::Get_constrained_Ts(const Eigen::VectorXd & Ts_
 Footsteps_plan FootStepGen::compute_plan()
 {
   std::chrono::high_resolution_clock::time_point t_clock = std::chrono::high_resolution_clock::now();
-
+  plan_.clear();
   GetStepsTimings();
 
   Theta_f_.resize(F_, 1);
@@ -688,7 +689,8 @@ Footsteps_plan FootStepGen::compute_plan()
 
   // mc_rtc::log::info("Step out F {}\n{}",F_,XY);
 
-  plan_.clear();
+  
+  plan_.ori_offset(theta_offset_);
   for(int k = 0; k < F_; k++)
   {
     double xf = XY(2 * k);

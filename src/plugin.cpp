@@ -68,7 +68,7 @@ void footsteps_planner_plugin::compute_footsteps_plan(mc_rtc::DataStore * datast
         mc_plugin::footsteps_planner::Footstep(input_footsteps_pose[k], 0, Eigen::Vector2d::Ones() * 0.1));
   }
 
-  planner_.Init(support_foot_name, support_footstep, input_v, input_t_steps, input_footsteps);
+  planner_.init(support_foot_name, support_footstep, input_v, input_t_steps, input_footsteps);
 
   planner_.compute_plan();
 

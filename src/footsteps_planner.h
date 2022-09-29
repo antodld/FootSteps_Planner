@@ -201,17 +201,25 @@ struct Footsteps_plan
 public:
   Footsteps_plan() = default;
   inline Footsteps_plan(const Footstep & support_foot,
+                        const std::string & supportFoot_name,
                         const Footstep & initial_swing_foot,
                         const std::vector<Footstep> & footsteps)
   {
     footsteps_ = footsteps;
+    support_foot_name(supportFoot_name);
     support_foot_ = support_foot;
     initial_swing_foot_ = initial_swing_foot;
   }
   ~Footsteps_plan() = default;
 
-  void add(const Footstep & step)
-  {
+  void add(Footstep step)
+  { 
+    int i = 0;
+    if (support_foot_name_ == "LeftFoot")
+    {
+      i = 1;
+    }
+    step.ori(step.ori() + ori_offset_ * std::pow(-1,footsteps_.size() + i ));
     footsteps_.push_back(step);
   }
   void clear()
@@ -269,15 +277,58 @@ public:
   {
     return footsteps_[indx];
   }
-  void support_foot(const Footstep & footstep)
+  void support_foot(Footstep & footstep)
   {
+    support_foot_no_offset = footstep;
+    if((footstep.pose() - support_foot_.pose()).norm() > 1e-3 && std::abs(footstep.ori() - support_foot_.ori()) > 1e-3 && !offset_applied)
+    {
+      offset_applied = true;
+    }
+    if (offset_applied)
+    {
+      double sgn = -1;
+      if (support_foot_name_ == "LeftFoot")
+      {
+        sgn *=-1;
+      }
+      footstep.ori(footstep.ori() - sgn * ori_offset_);
+    }
     support_foot_ = footstep;
   }
+  
+  const double & ori_offset() noexcept
+  {
+    return ori_offset_;
+  }
+
+  void ori_offset(const double & theta)
+  {
+    if(theta != ori_offset_)
+    {
+      offset_applied = false;
+    }
+    ori_offset_ = theta;
+  }
+
+  void support_foot_name(const std::string & name) noexcept
+  {
+    support_foot_name_ = name;
+  }
+
+  const std::string & support_foot_name()
+  {
+    return support_foot_name_;
+  }
+
 
 private:
   std::vector<Footstep> footsteps_;
   Footstep support_foot_;
+  Footstep support_foot_no_offset;
+  std::string support_foot_name_;
   Footstep initial_swing_foot_;
+  double ori_offset_ = 0;
+  bool offset_applied = false;
 };
 
 struct FootStepGen
@@ -296,7 +347,7 @@ public:
    * @tparam Tstep desired ordered Steps Timing (can be empty)
    * @tparam Pf desired ordered Footsteps coordinate (can be empty) (angle in z coordinate)
    */
-  void Init(std::string supportFootName,
+  void init(std::string supportFootName,
             Footstep P_f0,
             const std::vector<sva::MotionVecd> & V,
             const std::vector<double> & Tstep,
@@ -401,6 +452,7 @@ private:
   double P_; // Preview horizon time indexes
   double Ts_; // Cruise Parameters
   double robot_height_ = 150; // in cm
+  double theta_offset_ = 0;
 };
 
 } // namespace footsteps_planner
