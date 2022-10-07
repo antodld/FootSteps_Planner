@@ -5,7 +5,7 @@
 #include <chrono>
 #include <ctime>
 #include <eigen3/Eigen/Dense>
-#include <lipm_walking/utils/polynomials.h>
+#include "polynomials.h"
 
 namespace mc_plugin
 {

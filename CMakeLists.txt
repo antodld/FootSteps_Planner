@@ -16,9 +16,6 @@ if(NOT TARGET mc_rtc::mc_control)
   find_package(mc_rtc REQUIRED)
 endif()
 
-find_package(lipm_walking_controller REQUIRED)
-include_directories(${lipm_walking_controller_DIR}/../../../include)
-
 # Configure and install the plugin configuration
 configure_file(etc/footsteps_planner_plugin.in.yaml "${CMAKE_CURRENT_BINARY_DIR}/etc/footsteps_planner_plugin.yaml")
 install(FILES "${CMAKE_CURRENT_BINARY_DIR}/etc/footsteps_planner_plugin.yaml" DESTINATION "${MC_PLUGINS_RUNTIME_INSTALL_PREFIX}/etc")
