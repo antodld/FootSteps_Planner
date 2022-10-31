@@ -18,8 +18,8 @@ void footsteps_planner_plugin::init(mc_control::MCGlobalController & controller,
   controller.controller().datastore().make<std::vector<double>>("footsteps_planner::output_time_steps");
 
   auto & ctl = controller.controller();
-  controller.controller().datastore().make_call(
-      "footstep_planner::compute_plan", [this, &ctl]() { compute_footsteps_plan(ctl); });
+  controller.controller().datastore().make_call("footstep_planner::compute_plan",
+                                                [this, &ctl]() { compute_footsteps_plan(ctl); });
   controller.controller().datastore().make_call(
       "footstep_planner::configure",
       [this](const mc_rtc::Configuration & config) { planner_ = mc_plugin::footsteps_planner::FootStepGen(config); });
@@ -75,9 +75,9 @@ void footsteps_planner_plugin::compute_footsteps_plan(mc_control::MCController &
   planner_.compute_plan();
 
   datastore.assign<std::vector<sva::PTransformd>>("footsteps_planner::output_steps",
-                                                   planner_.footsteps_plan().steps_PTpose());
+                                                  planner_.footsteps_plan().steps_PTpose());
   datastore.assign<std::vector<double>>("footsteps_planner::output_time_steps",
-                                         planner_.footsteps_plan().steps_timings());
+                                        planner_.footsteps_plan().steps_timings());
 }
 
 void footsteps_planner_plugin::gui(mc_control::MCGlobalController & controller)

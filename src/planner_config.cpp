@@ -51,7 +51,7 @@ FootStepGen::FootStepGen(const mc_rtc::Configuration & config)
   if(config.has("offset_angle_deg"))
   {
     theta_offset_ = config("offset_angle_deg");
-    theta_offset_ *= mc_rtc::constants::PI/180.;
+    theta_offset_ *= mc_rtc::constants::PI / 180.;
   }
 
   Ts_ = (Ts_max_ + Ts_min_) / 2;

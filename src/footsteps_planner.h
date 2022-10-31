@@ -2,10 +2,10 @@
 #include <mc_control/mc_controller.h>
 #include "eigen-quadprog/QuadProg.h"
 #include "eigen-quadprog/eigen_quadprog_api.h"
+#include "polynomials.h"
 #include <chrono>
 #include <ctime>
 #include <eigen3/Eigen/Dense>
-#include "polynomials.h"
 
 namespace mc_plugin
 {
@@ -213,13 +213,13 @@ public:
   ~Footsteps_plan() = default;
 
   void add(Footstep step)
-  { 
+  {
     int i = 0;
-    if (support_foot_name_ == "LeftFoot")
+    if(support_foot_name_ == "LeftFoot")
     {
       i = 1;
     }
-    step.ori(step.ori() + ori_offset_ * std::pow(-1,footsteps_.size() + i ));
+    step.ori(step.ori() + ori_offset_ * std::pow(-1, footsteps_.size() + i));
     footsteps_.push_back(step);
   }
   void clear()
@@ -280,22 +280,23 @@ public:
   void support_foot(Footstep & footstep)
   {
     support_foot_no_offset = footstep;
-    if((footstep.pose() - support_foot_.pose()).norm() > 1e-3 && std::abs(footstep.ori() - support_foot_.ori()) > 1e-3 && !offset_applied)
+    if((footstep.pose() - support_foot_.pose()).norm() > 1e-3 && std::abs(footstep.ori() - support_foot_.ori()) > 1e-3
+       && !offset_applied)
     {
       offset_applied = true;
     }
-    if (offset_applied)
+    if(offset_applied)
     {
       double sgn = -1;
-      if (support_foot_name_ == "LeftFoot")
+      if(support_foot_name_ == "LeftFoot")
       {
-        sgn *=-1;
+        sgn *= -1;
       }
       footstep.ori(footstep.ori() - sgn * ori_offset_);
     }
     support_foot_ = footstep;
   }
-  
+
   const double & ori_offset() noexcept
   {
     return ori_offset_;
@@ -319,7 +320,6 @@ public:
   {
     return support_foot_name_;
   }
-
 
 private:
   std::vector<Footstep> footsteps_;
