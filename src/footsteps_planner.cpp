@@ -14,7 +14,6 @@ void FootStepGen::init(std::string supportFootName,
 
   std::chrono::high_resolution_clock::time_point t_clock = std::chrono::high_resolution_clock::now();
 
-  
   plan_.support_foot_name(supportFootName);
   plan_.support_foot(P_f0);
   N_steps = -1;
@@ -383,11 +382,12 @@ void FootStepGen::GetStepsTimings()
   mc_rtc::log::success("[Steps Timings Generation] 3 OK");
   F_ = StepsTimings_.size();
   mc_rtc::log::info("Params //");
-    for (int k = 0; k<F_; k++){
-      mc_rtc::log::info("Ts : {} ",StepsTimings_[k]);
-      mc_rtc::log::info(StepsTimings_indx_[k]);
-      mc_rtc::log::info("Foot: {} ",FootSteps_indx_[k]);
-      mc_rtc::log::info("//");
+  for(int k = 0; k < F_; k++)
+  {
+    mc_rtc::log::info("Ts : {} ", StepsTimings_[k]);
+    mc_rtc::log::info(StepsTimings_indx_[k]);
+    mc_rtc::log::info("Foot: {} ", FootSteps_indx_[k]);
+    mc_rtc::log::info("//");
   }
   // mc_rtc::log::info("Vx : {}", Eigen::Map<Eigen::VectorXd, Eigen::Unaligned>(Vx_.data(), Vx_.size()));
   // mc_rtc::log::info("Vy : {}", Eigen::Map<Eigen::VectorXd, Eigen::Unaligned>(Vy_.data(), Vy_.size()));
@@ -547,8 +547,8 @@ Footsteps_plan FootStepGen::compute_plan()
     }
   }
 
-  mc_rtc::log::info("Theta o ori {}",plan_.support_foot().ori());
-  mc_rtc::log::info("Theta out {}",Theta_f_);
+  mc_rtc::log::info("Theta o ori {}", plan_.support_foot().ori());
+  mc_rtc::log::info("Theta out {}", Theta_f_);
   // mc_rtc::log::info(b);
   // std::cout << "Theta" << std::endl;
 
@@ -679,15 +679,15 @@ Footsteps_plan FootStepGen::compute_plan()
 
   Q_ = Eigen::MatrixXd::Identity(2 * F_, 2 * F_) * 1e-12 + (M.transpose() * M);
   p_ = (-M.transpose() * b);
-  mc_rtc::log::info("Step Aineq {}",Aineq);
-  mc_rtc::log::info("Step bineq {}",bineq);
+  mc_rtc::log::info("Step Aineq {}", Aineq);
+  mc_rtc::log::info("Step bineq {}", bineq);
   Eigen::VectorXd XY(solveQP());
   if(!QPsuccess)
   {
     mc_rtc::log::error("Step QP failed");
   }
 
-  mc_rtc::log::info("Step out F {}\n{}",F_,XY);
+  mc_rtc::log::info("Step out F {}\n{}", F_, XY);
 
   plan_.ori_offset(theta_offset_);
 
