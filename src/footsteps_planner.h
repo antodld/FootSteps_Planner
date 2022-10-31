@@ -325,7 +325,7 @@ private:
   std::vector<Footstep> footsteps_;
   Footstep support_foot_;
   Footstep support_foot_no_offset;
-  std::string support_foot_name_;
+  std::string support_foot_name_ = "LeftFoot";
   Footstep initial_swing_foot_;
   double ori_offset_ = 0;
   bool offset_applied = false;
@@ -418,7 +418,7 @@ private:
   std::vector<double> t_steps_inputs_; // Input Step Timing
   std::vector<sva::MotionVecd> v_inputs_; // Velocity input
 
-  int F_; // footsteps number
+  int F_ = 1; // footsteps number
   int N_steps = -1;
 
   std::vector<double> StepsTimings_; // Contains the time of each steps
@@ -449,8 +449,8 @@ private:
   double d_h_y = 0.05; // Next step tolerance zone
   double v_ = 0.1; // Cruise Parameters
   double max_theta = 3.14 / 6; // Max angle between two steps
-  double P_; // Preview horizon time indexes
-  double Ts_; // Cruise Parameters
+  double P_ = 100; // Preview horizon time indexes
+  double Ts_ = 5.0; // Cruise Parameters
   double robot_height_ = 150; // in cm
   double theta_offset_ = 0;
 };
