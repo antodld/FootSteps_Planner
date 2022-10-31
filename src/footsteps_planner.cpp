@@ -681,10 +681,6 @@ Footsteps_plan FootStepGen::compute_plan()
   p_ = (-M.transpose() * b);
   mc_rtc::log::info("Step Aineq {}",Aineq);
   mc_rtc::log::info("Step bineq {}",bineq);
-  mc_rtc::log::info("Step Aeq {}",Aeq);
-  mc_rtc::log::info("Step beq {}",beq);
-  mc_rtc::log::info("Step Q {}",Q_);
-  mc_rtc::log::info("Step p {}",p_);
   Eigen::VectorXd XY(solveQP());
   if(!QPsuccess)
   {
