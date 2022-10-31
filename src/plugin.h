@@ -22,7 +22,7 @@ struct footsteps_planner_plugin : public mc_control::GlobalPlugin
 
   void after(mc_control::MCGlobalController & controller) override;
 
-  void compute_footsteps_plan(mc_rtc::DataStore * datastore);
+  void compute_footsteps_plan(mc_control::MCController & controller);
 
   void gui(mc_control::MCGlobalController & controller);
 

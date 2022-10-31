@@ -17,8 +17,9 @@ void footsteps_planner_plugin::init(mc_control::MCGlobalController & controller,
   controller.controller().datastore().make<std::vector<sva::PTransformd>>("footsteps_planner::output_steps");
   controller.controller().datastore().make<std::vector<double>>("footsteps_planner::output_time_steps");
 
+  auto & ctl = controller.controller();
   controller.controller().datastore().make_call(
-      "footstep_planner::compute_plan", [this](mc_rtc::DataStore * datastore) { compute_footsteps_plan(datastore); });
+      "footstep_planner::compute_plan", [this, &ctl]() { compute_footsteps_plan(ctl); });
   controller.controller().datastore().make_call(
       "footstep_planner::configure",
       [this](const mc_rtc::Configuration & config) { planner_ = mc_plugin::footsteps_planner::FootStepGen(config); });
@@ -50,14 +51,15 @@ void footsteps_planner_plugin::after(mc_control::MCGlobalController & controller
   mc_rtc::log::info("footsteps_planner::after");
 }
 
-void footsteps_planner_plugin::compute_footsteps_plan(mc_rtc::DataStore * datastore)
+void footsteps_planner_plugin::compute_footsteps_plan(mc_control::MCController & controller)
 {
 
-  auto & support_foot_pose = datastore->get<sva::PTransformd>("footsteps_planner::support_foot_pose");
-  auto & input_footsteps_pose = datastore->get<std::vector<sva::PTransformd>>("footsteps_planner::input_steps");
-  auto & input_v = datastore->get<std::vector<sva::MotionVecd>>("footsteps_planner::input_vel");
-  auto & input_t_steps = datastore->get<std::vector<double>>("footsteps_planner::input_time_steps");
-  auto & support_foot_name = datastore->get<std::string>("footsteps_planner::support_foot_name");
+  auto & datastore = controller.datastore();
+  auto & support_foot_pose = datastore.get<sva::PTransformd>("footsteps_planner::support_foot_pose");
+  auto & input_footsteps_pose = datastore.get<std::vector<sva::PTransformd>>("footsteps_planner::input_steps");
+  auto & input_v = datastore.get<std::vector<sva::MotionVecd>>("footsteps_planner::input_vel");
+  auto & input_t_steps = datastore.get<std::vector<double>>("footsteps_planner::input_time_steps");
+  auto & support_foot_name = datastore.get<std::string>("footsteps_planner::support_foot_name");
 
   mc_plugin::footsteps_planner::Footstep support_footstep(support_foot_pose, 0, Eigen::Vector2d::Ones() * 0.1);
   std::vector<mc_plugin::footsteps_planner::Footstep> input_footsteps;
@@ -72,9 +74,9 @@ void footsteps_planner_plugin::compute_footsteps_plan(mc_rtc::DataStore * datast
 
   planner_.compute_plan();
 
-  datastore->assign<std::vector<sva::PTransformd>>("footsteps_planner::output_steps",
+  datastore.assign<std::vector<sva::PTransformd>>("footsteps_planner::output_steps",
                                                    planner_.footsteps_plan().steps_PTpose());
-  datastore->assign<std::vector<double>>("footsteps_planner::output_time_steps",
+  datastore.assign<std::vector<double>>("footsteps_planner::output_time_steps",
                                          planner_.footsteps_plan().steps_timings());
 }
 
