@@ -18,8 +18,8 @@ void footsteps_planner_plugin::init(mc_control::MCGlobalController & controller,
   controller.controller().datastore().make<std::vector<double>>("footsteps_planner::output_time_steps");
 
   auto & ctl = controller.controller();
-  controller.controller().datastore().make_call(
-      "footstep_planner::compute_plan", [this, &ctl]() { compute_footsteps_plan(ctl); });
+  controller.controller().datastore().make_call("footstep_planner::compute_plan",
+                                                [this, &ctl]() { compute_footsteps_plan(ctl); });
   controller.controller().datastore().make_call(
       "footstep_planner::configure",
       [this](const mc_rtc::Configuration & config) { planner_ = mc_plugin::footsteps_planner::FootStepGen(config); });
@@ -75,9 +75,9 @@ void footsteps_planner_plugin::compute_footsteps_plan(mc_control::MCController &
   planner_.compute_plan();
 
   datastore.assign<std::vector<sva::PTransformd>>("footsteps_planner::output_steps",
-                                                   planner_.footsteps_plan().steps_PTpose());
+                                                  planner_.footsteps_plan().steps_PTpose());
   datastore.assign<std::vector<double>>("footsteps_planner::output_time_steps",
-                                         planner_.footsteps_plan().steps_timings());
+                                        planner_.footsteps_plan().steps_timings());
 }
 
 void footsteps_planner_plugin::gui(mc_control::MCGlobalController & controller)
@@ -98,6 +98,27 @@ void footsteps_planner_plugin::gui(mc_control::MCGlobalController & controller)
       // [this]() -> std::vector<Eigen::Vector3d>  { return this->planner_.footsteps_plan().steps_pose(); })
 
   );
+
+  controller.controller().gui()->addElement(
+      {"Footsteps Planner", "Configuration"},
+      mc_rtc::gui::Form(
+          "Configure", [this](const mc_rtc::Configuration & conf) { planner_.reconfigure(conf); },
+          mc_rtc::gui::FormArrayInput("Ts_limit", false,
+                                      [this]() -> std::array<double, 2> {
+                                        return {planner_.Ts_min_, planner_.Ts_max_};
+                                      }),
+          mc_rtc::gui::FormNumberInput("feet_distance", false, [this]() { return planner_.l_; }),
+          mc_rtc::gui::FormNumberInput("Tp", false, [this]() { return planner_.Tp_; }),
+          mc_rtc::gui::FormNumberInput("delta", false, [this]() { return planner_.delta_; }),
+          mc_rtc::gui::FormArrayInput("kinematics_cstr", false,
+                                      [this]() -> std::array<double, 2> {
+                                        return {planner_.d_h_x, planner_.d_h_y};
+                                      }),
+          mc_rtc::gui::FormNumberInput("mean_speed", false, [this]() { return planner_.v_; }),
+          mc_rtc::gui::FormNumberInput("robot_height", false, [this]() { return planner_.robot_height_; }),
+          mc_rtc::gui::FormNumberInput("max_rotation", false, [this]() { return planner_.max_theta; }),
+          mc_rtc::gui::FormNumberInput("offset_angle_deg", false,
+                                       [this]() { return planner_.theta_offset_ * 180 / mc_rtc::constants::PI; })));
 }
 
 mc_control::GlobalPlugin::GlobalPluginConfiguration footsteps_planner_plugin::configuration()
