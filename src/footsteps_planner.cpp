@@ -335,6 +335,7 @@ void FootStepGen::GetStepsTimings()
         StepsTimings_Upper_Lower_cstr.push_back(Eigen::Vector2d{-1, -1});
       }
     }
+    
     else
     {
       // mc_rtc::log::info("No foot to link");
@@ -346,6 +347,7 @@ void FootStepGen::GetStepsTimings()
     StepsTimings_.push_back(ti);
     StepsTimings_indx_.push_back(ki);
   }
+  
   // mc_rtc::log::success("[Steps Timings Generation] 2 OK, Ts size {} ; Ps cstr size {} ", StepsTimings_.size()
   // ,StepsTimings_Upper_Lower_cstr.size());
   while(StepsTimings_[StepsTimings_.size() - 1] > Tp_)
@@ -379,21 +381,15 @@ void FootStepGen::GetStepsTimings()
     StepsTimings_indx_.pop_back();
   }
 
-  mc_rtc::log::success("[Steps Timings Generation] 3 OK");
+  //mc_rtc::log::success("[Steps Timings Generation] 3 OK");
   F_ = StepsTimings_.size();
-  mc_rtc::log::info("Params //");
-  for(int k = 0; k < F_; k++)
-  {
-    mc_rtc::log::info("Ts : {} ", StepsTimings_[k]);
-    mc_rtc::log::info(StepsTimings_indx_[k]);
-    mc_rtc::log::info("Foot: {} ", FootSteps_indx_[k]);
-    mc_rtc::log::info("//");
-  }
-  // mc_rtc::log::info("Vx : {}", Eigen::Map<Eigen::VectorXd, Eigen::Unaligned>(Vx_.data(), Vx_.size()));
-  // mc_rtc::log::info("Vy : {}", Eigen::Map<Eigen::VectorXd, Eigen::Unaligned>(Vy_.data(), Vy_.size()));
-  // mc_rtc::log::info("omega : {}", Eigen::Map<Eigen::VectorXd, Eigen::Unaligned>(Omega_.data(), Omega_.size()));
-  // for (int k = 0 ; k < 4 ; k ++){
-  //   mc_rtc::log::info("Ptraj : {}" , P_traj_[k].z());
+  // mc_rtc::log::info("Params //");
+  // for(int k = 0; k < F_; k++)
+  // {
+  //   mc_rtc::log::info("Ts : {} ", StepsTimings_[k]);
+  //   mc_rtc::log::info(StepsTimings_indx_[k]);
+  //   mc_rtc::log::info("Foot: {} ", FootSteps_indx_[k]);
+  //   mc_rtc::log::info("//");
   // }
 
   std::chrono::duration<double, std::milli> time_span = std::chrono::high_resolution_clock::now() - t_clock;
@@ -547,8 +543,8 @@ Footsteps_plan FootStepGen::compute_plan()
     }
   }
 
-  mc_rtc::log::info("Theta o ori {}", plan_.support_foot().ori());
-  mc_rtc::log::info("Theta out {}", Theta_f_);
+  // mc_rtc::log::info("Theta o ori {}", plan_.support_foot().ori());
+  // mc_rtc::log::info("Theta out {}", Theta_f_);
   // mc_rtc::log::info(b);
   // std::cout << "Theta" << std::endl;
 
@@ -679,19 +675,19 @@ Footsteps_plan FootStepGen::compute_plan()
 
   Q_ = Eigen::MatrixXd::Identity(2 * F_, 2 * F_) * 1e-12 + (M.transpose() * M);
   p_ = (-M.transpose() * b);
-  mc_rtc::log::info("Step Aineq {}",Aineq);
-  mc_rtc::log::info("Step bineq {}",bineq);
-  mc_rtc::log::info("Step Aeq {}",Aeq);
-  mc_rtc::log::info("Step beq {}",beq);
-  mc_rtc::log::info("Step Q {}",Q_);
-  mc_rtc::log::info("Step p {}",p_);
+  // mc_rtc::log::info("Step Aineq {}",Aineq);
+  // mc_rtc::log::info("Step bineq {}",bineq);
+  // mc_rtc::log::info("Step Aeq {}",Aeq);
+  // mc_rtc::log::info("Step beq {}",beq);
+  // mc_rtc::log::info("Step Q {}",Q_);
+  // mc_rtc::log::info("Step p {}",p_);
   Eigen::VectorXd XY(solveQP());
   if(!QPsuccess)
   {
     mc_rtc::log::error("Step QP failed");
   }
 
-  mc_rtc::log::info("Step out F {}\n{}", F_, XY);
+  //mc_rtc::log::info("Step out F {}\n{}", F_, XY);
 
   plan_.ori_offset(theta_offset_);
 
