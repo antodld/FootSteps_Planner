@@ -37,6 +37,8 @@ private:
   // std::string support_foot_name_;
   // sva::PTransformd support_foot_pose_;
 
+  centered_ref_trajectory_ = false;
+
   footsteps_planner::FootStepGen planner_;
 
   std::vector<sva::PTransformd> output_steps_;

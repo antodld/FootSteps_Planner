@@ -58,6 +58,10 @@ void FootStepGen::reconfigure(const mc_rtc::Configuration & config)
     theta_offset_ = config("offset_angle_deg");
     theta_offset_ *= mc_rtc::constants::PI / 180.;
   }
+  if(config.has("centered_trajectory"))
+  {
+    centered_ref_trajectory_ = config("centered_trajectory");
+  }
 
   Ts_ = (Ts_max_ + Ts_min_) / 2;
   P_ = (int)(Tp_ / delta_);

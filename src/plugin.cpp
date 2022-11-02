@@ -86,7 +86,7 @@ void footsteps_planner_plugin::gui(mc_control::MCGlobalController & controller)
   controller.controller().gui()->addElement(
       {"Footsteps Planner"},
       mc_rtc::gui::Trajectory("Trajectory", mc_rtc::gui::Color(1., 1., 0.),
-                              [this]() -> std::vector<Eigen::Vector3d> { return planner_.Ref_Traj(); })
+                              [this]() -> std::vector<Eigen::Vector3d> { return planner_.ref_traj(centered_ref_trajectory_); })
 
       // mc_rtc::gui::Polygon("Steps", mc_rtc::gui::Color(0., 1., 0.),
       //                      [this]() -> std::vector<std::vector<Eigen::Vector3d>> {

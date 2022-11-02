@@ -186,6 +186,10 @@ public:
   {
     return ts_;
   }
+  Eigen::Vector3d pose3()
+  {
+    return Eigen::Vector3d{pose_.x(),pose_.y(),0};
+  }
 
 private:
   Eigen::Vector2d pose_;
@@ -362,12 +366,15 @@ public:
   }
 
   // Return the reference trajectory in the preview horizon
-  std::vector<Eigen::Vector3d> Ref_Traj()
+  std::vector<Eigen::Vector3d> ref_traj(bool centered)
   {
     std::vector<Eigen::Vector3d> Output;
+    
+    Eigen::Vector3d offset = plan_.support_foot().pose3();
+    if(centered){offset = Eigen::Vector3d::Zero();}
     for(int k = 0; k < P_traj_.size(); k++)
     {
-      Output.push_back(P_traj_[k].vec3_pose());
+      Output.push_back(P_traj_[k].vec3_pose() - offset);
     }
     return Output;
   }
