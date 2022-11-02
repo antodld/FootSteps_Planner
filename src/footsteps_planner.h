@@ -369,13 +369,17 @@ public:
   std::vector<Eigen::Vector3d> ref_traj(bool centered)
   {
     std::vector<Eigen::Vector3d> Output;
-    
+    Eigen::Vector3d offset = Eigen::Vector3d::Zero();
+    Eigen::Matrix3d R_traj_0 = Eigen::Matrix3d::Identity();
+    if(P_traj_.size() != 0 && centered)
+    {
+      offset = P_traj_[0].vec3_pose();
+      R_traj_0 = sva::RotZ(P_traj_[0].ori()).transpose();
+    }
 
     for(int k = 0; k < P_traj_.size(); k++)
-    {  
-      Eigen::Vector3d offset = P_traj_[0].vec3_pose();
-      if(centered){offset = Eigen::Vector3d::Zero();}
-      Output.push_back(P_traj_[k].vec3_pose() - offset);
+    { 
+      Output.push_back( R_traj_0 * (P_traj_[k].vec3_pose() - offset) );
     }
     return Output;
   }
