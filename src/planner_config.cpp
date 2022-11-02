@@ -11,6 +11,11 @@ FootStepGen::FootStepGen()
 }
 FootStepGen::FootStepGen(const mc_rtc::Configuration & config)
 {
+  reconfigure(config);
+}
+
+void FootStepGen::reconfigure(const mc_rtc::Configuration & config)
+{
   mc_rtc::log::info("footsteps_planner::init called with configuration:\n{}", config.dump(true, true));
   if(config.has("Ts_limit"))
   {
