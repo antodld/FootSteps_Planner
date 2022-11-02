@@ -353,6 +353,8 @@ public:
             const std::vector<double> & Tstep,
             std::vector<Footstep> & Pf);
 
+  void reconfigure(const mc_rtc::Configuration & config);
+
   // Return The footsteps Theta values
   const Eigen::VectorXd & Theta_f() const noexcept
   {
@@ -439,7 +441,7 @@ private:
 
   Eigen::MatrixXd Aineq; // Inequality Matrix
   Eigen::VectorXd bineq; // Inequality Vector
-
+public:
   double Ts_min_ = 0.8; // Step Time lenght limits
   double Ts_max_ = 2; // Step Time lenght limits
   double l_ = 0.2; // Distance between foot
