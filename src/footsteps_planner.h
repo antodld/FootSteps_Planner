@@ -371,7 +371,7 @@ public:
     std::vector<Eigen::Vector3d> Output;
     Eigen::Vector3d offset = Eigen::Vector3d::Zero();
     Eigen::Matrix3d R_traj_0 = Eigen::Matrix3d::Identity();
-    if(P_traj_.size() != 0 && centered)
+    if(P_traj_.size() != 0 && !centered)
     {
       offset = P_traj_[0].vec3_pose();
       R_traj_0 = sva::RotZ(P_traj_[0].ori()).transpose();
