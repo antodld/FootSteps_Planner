@@ -370,10 +370,11 @@ public:
   {
     std::vector<Eigen::Vector3d> Output;
     
-    Eigen::Vector3d offset = plan_.support_foot().pose3();
-    if(centered){offset = Eigen::Vector3d::Zero();}
+
     for(int k = 0; k < P_traj_.size(); k++)
-    {
+    {  
+      Eigen::Vector3d offset = P_traj_[0].vec3_pose();
+      if(centered){offset = Eigen::Vector3d::Zero();}
       Output.push_back(P_traj_[k].vec3_pose() - offset);
     }
     return Output;
