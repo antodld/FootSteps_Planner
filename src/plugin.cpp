@@ -27,6 +27,10 @@ void footsteps_planner_plugin::init(mc_control::MCGlobalController & controller,
   if(controller.controller().config().has("footsteps_planner"))
   {
     planner_ = mc_plugin::footsteps_planner::FootStepGen(controller.controller().config()("footsteps_planner"));
+    if(config("footsteps_planner").has("centered_trajectory"))
+    {
+      centered_ref_trajectory_ = config("footsteps_planner")("centered_trajectory");
+    }
   }
   else
   {
