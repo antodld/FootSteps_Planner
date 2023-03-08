@@ -42,17 +42,20 @@ void footsteps_planner_plugin::init(mc_control::MCGlobalController & controller,
 
 void footsteps_planner_plugin::reset(mc_control::MCGlobalController & controller)
 {
-  mc_rtc::log::info("footsteps_planner::reset called");
+  const double t = controller.timestep();
+  mc_rtc::log::info("footsteps_planner::reset called {}",t);
 }
 
 void footsteps_planner_plugin::before(mc_control::MCGlobalController & controller)
 {
-  mc_rtc::log::info("footsteps_planner::before");
+  const double t = controller.timestep();
+  mc_rtc::log::info("footsteps_planner::before {}",t);
 }
 
 void footsteps_planner_plugin::after(mc_control::MCGlobalController & controller)
 {
-  mc_rtc::log::info("footsteps_planner::after");
+  const double t = controller.timestep();
+  mc_rtc::log::info("footsteps_planner::after {}",t);
 }
 
 void footsteps_planner_plugin::compute_footsteps_plan(mc_control::MCController & controller)
@@ -69,12 +72,12 @@ void footsteps_planner_plugin::compute_footsteps_plan(mc_control::MCController &
   mc_plugin::footsteps_planner::Footstep support_footstep(support_foot_pose, 0, size);
   std::vector<mc_plugin::footsteps_planner::Footstep> input_footsteps;
 
-  for(int k = 0; k < input_footsteps_pose.size(); k++)
+  for(size_t k = 0; k < input_footsteps_pose.size(); k++)
   {
     input_footsteps.push_back(
-        mc_plugin::footsteps_planner::Footstep(input_footsteps_pose[k], 0, Eigen::Vector2d::Ones() * 0.1));
+        mc_plugin::footsteps_planner::Footstep(input_footsteps_pose[k], 0, size));
   }
-
+  
   planner_.init(support_foot_name, support_footstep, input_v, input_t_steps, input_footsteps);
 
   planner_.compute_plan();

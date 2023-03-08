@@ -52,7 +52,7 @@ public:
     Polygone_Edges_Center.resize(2, Polygone_Corners.size());
     Polygone_Vertices.resize(2, Polygone_Corners.size());
     Offset.resize(Polygone_Corners.size());
-    for(int c = 0; c < Polygone_Corners.size(); c++)
+    for(size_t c = 0; c < Polygone_Corners.size(); c++)
     {
       Eigen::Vector3d point_1 = Polygone_Corners[c];
       Eigen::Vector3d point_2 = Polygone_Corners[(c + 1) % Polygone_Corners.size()];
@@ -135,7 +135,7 @@ struct ref_traj_point
     Eigen::Vector3d center{pose_.x(), pose_.y(), 0.};
     return sva::PTransformd(sva::RotZ(ori_), center);
   }
-  const double ori()
+  double ori()
   {
     return ori_;
   }
@@ -162,7 +162,7 @@ public:
   {
     ts_ = ts;
     Eigen::Vector3d center{pose_.x(), pose_.y(), ori_};
-    Eigen::Vector3d dim{step_size_.x(), step_size_.y(), 0.};
+    Eigen::Vector3d dim{step_size.x(), step_size.y(), 0.};
     step_rect_ = Admissible_Region(center, dim);
   }
   Footstep(const Eigen::Vector2d & pose, const double ori, double ts, const Eigen::Vector2d & step_size)
@@ -182,7 +182,7 @@ public:
     return step_rect_;
   }
 
-  const double ts() const noexcept
+  double ts() const noexcept
   {
     return ts_;
   }
@@ -233,7 +233,7 @@ public:
   std::vector<std::vector<Eigen::Vector3d>> get_steps_corners()
   {
     std::vector<std::vector<Eigen::Vector3d>> Output;
-    for(int k = 0; k < n_steps(); k++)
+    for(size_t k = 0; k < n_steps(); k++)
     {
       Output.push_back(footsteps_[k].rect().Get_corners());
     }
@@ -242,7 +242,7 @@ public:
   std::vector<Eigen::Vector3d> steps_pose()
   {
     std::vector<Eigen::Vector3d> output;
-    for(int k = 0; k < footsteps_.size(); k++)
+    for(size_t k = 0; k < footsteps_.size(); k++)
     {
 
       output.push_back(footsteps_[k].vec3_pose());
@@ -252,7 +252,7 @@ public:
   std::vector<sva::PTransformd> steps_PTpose()
   {
     std::vector<sva::PTransformd> output;
-    for(int k = 0; k < footsteps_.size(); k++)
+    for(size_t k = 0; k < footsteps_.size(); k++)
     {
 
       output.push_back(footsteps_[k].PT_pose());
@@ -262,14 +262,14 @@ public:
   std::vector<double> steps_timings()
   {
     std::vector<double> output;
-    for(int k = 0; k < footsteps_.size(); k++)
+    for(size_t k = 0; k < footsteps_.size(); k++)
     {
 
       output.push_back(footsteps_[k].ts());
     }
     return output;
   }
-  int n_steps() const noexcept
+  size_t n_steps() const noexcept
   {
     return footsteps_.size();
   }
@@ -277,7 +277,7 @@ public:
   {
     return support_foot_;
   }
-  Footstep & footstep(int indx)
+  Footstep & footstep(size_t indx)
   {
     return footsteps_[indx];
   }
@@ -371,7 +371,7 @@ public:
     std::vector<Eigen::Vector3d> Output;
     
 
-    for(int k = 0; k < P_traj_.size(); k++)
+    for(size_t k = 0; k < P_traj_.size(); k++)
     {  
       Eigen::Vector3d offset = P_traj_[0].vec3_pose();
       if(centered){offset = Eigen::Vector3d::Zero();}
@@ -416,8 +416,8 @@ private:
    * @tparam k_end time index desired
    * @return Coordinate of the integrated ref velocity at time index k with orientation in z
    */
-  ref_traj_point IntegrateVelProfile(int k_end);
-  int Get_ki(int k, int kfoot);
+  ref_traj_point IntegrateVelProfile(size_t k_end);
+  size_t Get_ki(size_t k, size_t kfoot);
 
   std::string supportFoot = "RightFoot";
 
@@ -432,7 +432,7 @@ private:
   int N_steps = -1;
 
   std::vector<double> StepsTimings_; // Contains the time of each steps
-  std::vector<int> StepsTimings_indx_; // Index timing of each steps
+  std::vector<size_t> StepsTimings_indx_; // Index timing of each steps
   std::vector<int> FootSteps_indx_; // Index of the input steps position for the right step timing
   Eigen::VectorXd Theta_f_; // Output Steps Angles
   Eigen::VectorXd m_Ts; // Steps Duration
@@ -459,7 +459,7 @@ public:
   double d_h_y = 0.05; // Next step tolerance zone
   double v_ = 0.1; // Cruise Parameters
   double max_theta = 3.14 / 6; // Max angle between two steps
-  double P_ = 100; // Preview horizon time indexes
+  int P_ = 100; // Preview horizon time indexes
   double Ts_ = 5.0; // Cruise Parameters
   double robot_height_ = 150; // in cm
   double theta_offset_ = 0;

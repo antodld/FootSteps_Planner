@@ -22,7 +22,7 @@ void FootStepGen::init(std::string supportFootName,
   P_traj_.clear();
   P_traj_.push_back(IntegrateVelProfile(0));
 
-  for(int k = 1; k < (int)v_inputs_.size(); k++)
+  for(size_t k = 1; k < v_inputs_.size(); k++)
   {
     P_traj_.push_back(IntegrateVelProfile(k));
   }
@@ -32,8 +32,12 @@ void FootStepGen::init(std::string supportFootName,
   {
     t_steps_inputs_[0] = std::max(Ts_min_, t_steps_inputs_[0]);
   }
+  while(t_steps_inputs_.back() > Tp_)
+  {
+    t_steps_inputs_.pop_back();
+  }
 
-  for(int k = 0; k < Pf.size(); k++)
+  for(size_t k = 0; k < Pf.size(); k++)
   {
     if(std::abs(Pf[k].ori()) > M_PI)
     {
@@ -46,7 +50,8 @@ void FootStepGen::init(std::string supportFootName,
   // mc_rtc::log::info(v_inputs_.size());
 
   std::chrono::duration<double, std::milli> time_span = std::chrono::high_resolution_clock::now() - t_clock;
-  double ProcessTime = time_span.count();
+  // double ProcessTime = time_span.count();
+  // std::cout << "Footstep plan init done" << std::endl;
   // mc_rtc::log::success("FootSteps Initialized in : " + std::to_string(ProcessTime));
 }
 
@@ -59,26 +64,26 @@ void FootStepGen::GetStepsTimings()
   FootSteps_indx_.clear();
   // 1 Generate reference trajectory and velocity according to order V -> Pf -> Ts
 
-  if(v_inputs_.size() != P_)
+  if(v_inputs_.size() != static_cast<size_t>(P_))
   {
     // 1-1 Check if the reference trajectory and vel can be drawn from Pf_in;
 
     if(steps_inputs_.size() != 0)
     {
       mc_rtc::log::info("[Steps Timings Generation] Generation by Pf_in");
-      int ki_start = 0;
-      for(int kfoot = 0; kfoot < steps_inputs_.size(); kfoot++)
+      size_t ki_start = 0;
+      for(size_t kfoot = 0; kfoot < steps_inputs_.size(); kfoot++)
       {
 
-        int ki = ki_start;
+        size_t ki = ki_start;
         while(ki <= v_inputs_.size())
         {
-          if(v_inputs_.size() == P_)
+          if(v_inputs_.size() ==static_cast<size_t>(P_))
           {
             break;
           }
 
-          ref_traj_point P_ki = P_traj_[std::min(ki, (int)P_traj_.size() - 1)];
+          ref_traj_point P_ki = P_traj_[std::min(ki,  P_traj_.size() - 1)];
 
           double dist_i_x = std::abs(
               (sva::RotZ(-P_ki.ori()).block(0, 0, 2, 2).transpose() * (P_ki.pose() - steps_inputs_[kfoot].pose())).x());
@@ -126,7 +131,7 @@ void FootStepGen::GetStepsTimings()
             std::vector<sva::MotionVecd> V;
             if(Traj.size() > 2)
             {
-              for(int k = 0; k < Traj.size() - 1; k++)
+              for(size_t k = 0; k < Traj.size() - 1; k++)
               {
                 sva::MotionVecd v_k((Traj[k + 1].rpy_ori() - Traj[k].rpy_ori()) / delta_,
                                     (Traj[k + 1].vec3_pose() - Traj[k].vec3_pose()) / delta_);
@@ -139,7 +144,7 @@ void FootStepGen::GetStepsTimings()
               V.push_back(sva::MotionVecd::Zero());
             }
 
-            for(int k = 0; k < std::min((int)V.size(), (int)P_); k++)
+            for(size_t k = 0; k < std::min( V.size(), static_cast<size_t>(P_) ); k++)
             {
 
               v_inputs_.push_back(V[k]);
@@ -177,11 +182,11 @@ void FootStepGen::GetStepsTimings()
 
     // 1-2 Use timesteps to generate forward velocity
 
-    if(t_steps_inputs_.size() != 0 && v_inputs_.size() != P_)
+    if(t_steps_inputs_.size() != 0 && v_inputs_.size() != static_cast<size_t>(P_))
     {
 
-      double ti = v_inputs_.size() * delta_;
-      int kTsteps = 0;
+      double ti = static_cast<double>(v_inputs_.size()) * delta_;
+      size_t kTsteps = 0;
 
       while(t_steps_inputs_[kTsteps] - ti < Ts_min_ && kTsteps < t_steps_inputs_.size())
       {
@@ -197,14 +202,14 @@ void FootStepGen::GetStepsTimings()
           double f = 1 / (nextTs - ti);
           double v = std::pow(f * robot_height_ / (0.157 * 172), 2) * 1e-2;
           // mc_rtc::log::info("speed v {}", v);
-          for(int k = 0; k < (int)((nextTs - ti) / delta_); k++)
+          for(size_t k = 0; k < (size_t)((nextTs - ti) / delta_); k++)
           {
 
             v_inputs_.push_back(sva::MotionVecd(Eigen::Vector3d::Zero(), Eigen::Vector3d{v, 0, 0}));
             ref_traj_point next_P_traj = P_traj_.back();
             next_P_traj.ori_ += v_inputs_.back().angular().z() * delta_;
             next_P_traj.pose_ += sva::RotZ(-next_P_traj.ori()).block(0, 0, 2, 2) * v_inputs_.back().linear() * delta_;
-            for(int i = 0; i < 3; i++)
+            for(Eigen::Index i = 0; i < 3; i++)
             {
               if(std::abs(next_P_traj.pose_(i)) < 1e-5)
               {
@@ -222,10 +227,10 @@ void FootStepGen::GetStepsTimings()
 
     // 1-3 Generate a 0 velocity
 
-    if(v_inputs_.size() != P_)
+    if(v_inputs_.size() != static_cast<size_t>(P_))
     {
       // mc_rtc::log::info("Generation by 0  vel");
-      while(v_inputs_.size() < P_)
+      while(v_inputs_.size() < static_cast<size_t>(P_))
       {
         v_inputs_.push_back(sva::MotionVecd::Zero());
         P_traj_.push_back(P_traj_.back());
@@ -243,14 +248,20 @@ void FootStepGen::GetStepsTimings()
   // boundaries)
 
   double ti = 0;
-  int ki = 0;
-  int kfoot = 0;
+  size_t ki = 0;
+  size_t kfoot = 0;
+  size_t kTstep = 0;
   std::vector<Eigen::Vector2d> StepsTimings_Upper_Lower_cstr;
 
   while(ti < Tp_)
   {
     // mc_rtc::log::info("speed at ki {} , {}",ki,Eigen::Vector2d{Vx_[ki], Vy_[ki]});
-    if(v_inputs_[ki].linear().norm() > 1e-4)
+    if(kTstep < t_steps_inputs_.size())
+    {
+      ti = t_steps_inputs_[kTstep];
+      kTstep+=1;
+    }
+    else if(v_inputs_[ki].linear().norm() > 1e-4)
     {
       Eigen::Vector2d v_i = v_inputs_[ki].linear().segment(0, 2) * 1e2;
       double next_ts = (robot_height_ / (sqrt(v_i.norm()) * 0.157 * 172));
@@ -267,7 +278,7 @@ void FootStepGen::GetStepsTimings()
     if(kfoot < steps_inputs_.size())
     {
 
-      ref_traj_point P_ki = P_traj_[std::min(ki, (int)P_traj_.size() - 1)];
+      ref_traj_point P_ki = P_traj_[std::min(ki, P_traj_.size() - 1)];
 
       double dist_i_x = std::abs(
           (sva::RotZ(-P_ki.ori()).block(0, 0, 2, 2).transpose() * (P_ki.pose() - steps_inputs_[kfoot].pose())).x());
@@ -281,7 +292,7 @@ void FootStepGen::GetStepsTimings()
       // mc_rtc::log::info("Foot dist x {} , y {} , theta {}" , dist_i_x , dist_i_y, dist_i_theta );
       if(dist_i_x < d_h_x / 2 && dist_i_y < l_ / 2 + d_h_y && std::abs(dist_i_theta) < max_theta)
       {
-        int n = FootSteps_indx_.size();
+        size_t n = FootSteps_indx_.size();
         // mc_rtc::log::info("Step No: {} ",n+1);
         // mc_rtc::log::info("DIST Y : {} & Dtheta {} at ki : {}",dist_i_y,dist_i_theta,ki);
         // mc_rtc::log::info("Pki.z() : {}",P_ki.z());
@@ -289,17 +300,17 @@ void FootStepGen::GetStepsTimings()
         // mc_rtc::log::info("ki : {}",ki);
 
         P_ki = P_traj_[ki];
-        double dist_i = (P_ki.pose() - steps_inputs_[kfoot].pose()).norm();
+        // double dist_i = (P_ki.pose() - steps_inputs_[kfoot].pose()).norm();
         dist_i_y =
             (sva::RotZ(-P_ki.ori()).transpose().block(0, 0, 2, 2) * (P_ki.pose() - steps_inputs_[kfoot].pose())).y();
 
         if(supportFoot == "RightFoot")
         {
-          dist_i_y *= (2 * (n % 2) - 1);
+          dist_i_y *= static_cast<double>(2 * (n % 2) - 1);
         }
         else
         {
-          dist_i_y *= (2 * ((n + 1) % 2) - 1);
+          dist_i_y *= static_cast<double>(2 * ((n + 1) % 2) - 1);
         }
         // mc_rtc::log::info("diy {} ",dist_i_y  );
         if(dist_i_y > 0)
@@ -307,17 +318,17 @@ void FootStepGen::GetStepsTimings()
           // mc_rtc::log::info("foot link kfoot {} at ki : {} ",kfoot,ki);
           // mc_rtc::log::info("DIST F : {}",dist_i);
           ti = ((double)ki) * delta_;
-          FootSteps_indx_.push_back(kfoot);
+          FootSteps_indx_.push_back(static_cast<int>(kfoot));
           StepsTimings_Upper_Lower_cstr.push_back(Eigen::Vector2d{ti + 0.5 * Ts_min_, ti - 0.5 * Ts_min_});
-          N_steps = FootSteps_indx_.size();
+          N_steps = static_cast<int>(FootSteps_indx_.size());
         }
         else
         {
           FootSteps_indx_.push_back(-1);
           StepsTimings_Upper_Lower_cstr.push_back(Eigen::Vector2d{-1, -1});
-          FootSteps_indx_.push_back(kfoot);
+          FootSteps_indx_.push_back(static_cast<int>(kfoot));
           StepsTimings_Upper_Lower_cstr.push_back(Eigen::Vector2d{ti + 0.5 * Ts_min_, ti - 0.5 * Ts_min_});
-          N_steps = FootSteps_indx_.size();
+          N_steps = static_cast<int>(FootSteps_indx_.size());
           StepsTimings_.push_back(ti);
           StepsTimings_indx_.push_back(ki);
 
@@ -343,7 +354,7 @@ void FootStepGen::GetStepsTimings()
       StepsTimings_Upper_Lower_cstr.push_back(Eigen::Vector2d{-1, -1});
     }
 
-    ki = (int)std::round(ti / delta_);
+    ki = static_cast<int>(std::round(ti / delta_));
     StepsTimings_.push_back(ti);
     StepsTimings_indx_.push_back(ki);
   }
@@ -364,12 +375,12 @@ void FootStepGen::GetStepsTimings()
   Steps_timings_output cstr_Ts = Get_constrained_Ts(Ts_Candidate, StepsTimings_Upper_Lower_cstr);
   // mc_rtc::log::info("Qp has : {}", cstr_Ts.QPsuccess);
 
-  for(int i = 0; i < cstr_Ts.Ts.size(); i++)
+  for(size_t i = 0; i < static_cast<size_t>(cstr_Ts.Ts.size()); i++)
   {
-    StepsTimings_[i] = cstr_Ts.Ts(i);
+    StepsTimings_[i] = cstr_Ts.Ts( static_cast<Eigen::Index>(i) );
   }
 
-  for(int i = 0; i < StepsTimings_.size(); i++)
+  for(size_t i = 0; i < StepsTimings_.size(); i++)
   {
     double t_i = StepsTimings_[i];
     StepsTimings_indx_[i] = (int)std::round(t_i / delta_);
@@ -382,9 +393,9 @@ void FootStepGen::GetStepsTimings()
   }
 
   //mc_rtc::log::success("[Steps Timings Generation] 3 OK");
-  F_ = StepsTimings_.size();
+  F_ = static_cast<int>(StepsTimings_.size());
   // mc_rtc::log::info("Params //");
-  // for(int k = 0; k < F_; k++)
+  // for(size_t k = 0; k < static_cast<size_t>(F_); k++)
   // {
   //   mc_rtc::log::info("Ts : {} ", StepsTimings_[k]);
   //   mc_rtc::log::info(StepsTimings_indx_[k]);
@@ -393,24 +404,31 @@ void FootStepGen::GetStepsTimings()
   // }
 
   std::chrono::duration<double, std::milli> time_span = std::chrono::high_resolution_clock::now() - t_clock;
-  double ProcessTime = time_span.count();
+  // double ProcessTime = time_span.count();
   // mc_rtc::log::success("StepTiming gened in: " + std::to_string(ProcessTime) + " ms");
 }
 
-Steps_timings_output FootStepGen::Get_constrained_Ts(const Eigen::VectorXd & Ts_candidate,
-                                                     const std::vector<Eigen::Vector2d> & StepsTimings_Upper_Lower_cstr)
+Steps_timings_output FootStepGen::Get_constrained_Ts(const Eigen::VectorXd Ts_candidate,
+                                                     const std::vector<Eigen::Vector2d> StepsTimings_Upper_Lower_cstr)
 {
   std::chrono::high_resolution_clock::time_point t_clock = std::chrono::high_resolution_clock::now();
 
-  int nTs = Ts_candidate.rows();
-  int n_eq_cstr = t_steps_inputs_.size();
+  Eigen::Index nTs = Ts_candidate.rows();
+  Eigen::Index n_eq_cstr = t_steps_inputs_.size();
   Eigen::MatrixXd M = Eigen::MatrixXd::Identity(nTs, nTs);
   Steps_timings_output Output;
+  if(n_eq_cstr == nTs)
+  {
+    Output.Ts = Eigen::Map<Eigen::VectorXd>(t_steps_inputs_.data(), t_steps_inputs_.size());
+    Output.loss = 0;
+    Output.QPsuccess = true;
+  }
+
   Eigen::MatrixXd Delta = Eigen::MatrixXd::Identity(nTs, nTs);
   Eigen::VectorXd Upper_cstr = Eigen::VectorXd::Ones(nTs) * Ts_max_;
   Eigen::VectorXd Lower_cstr = Eigen::VectorXd::Ones(nTs) * Ts_min_;
   Aeq = Eigen::MatrixXd::Zero(n_eq_cstr, nTs);
-  beq = Eigen::VectorXd::Zero(n_eq_cstr);
+  beq = Eigen::VectorXd::Zero(Aeq.rows());
 
   for(int i = 1; i < nTs; i++)
   {
@@ -424,16 +442,16 @@ Steps_timings_output FootStepGen::Get_constrained_Ts(const Eigen::VectorXd & Ts_
       Lower_cstr(i) = StepsTimings_Upper_Lower_cstr[i](1);
     }
   }
-  for(int i = 0; i < t_steps_inputs_.size(); i++)
+  for(Eigen::Index i = 0; i < static_cast<Eigen::Index>(t_steps_inputs_.size()); i++)
   {
     Aeq(i, i) = 1;
     beq(i) = t_steps_inputs_[i];
   }
-  Aineq.resize(2 * Delta.rows(), nTs);
-  bineq.resize(2 * Delta.rows());
+  Aineq = Eigen::MatrixXd::Zero(2 * Delta.rows(), nTs);
+  bineq = Eigen::VectorXd::Zero(Aineq.rows());
   Aineq << Delta, -Delta;
   bineq << Upper_cstr, -Lower_cstr;
-  Q_ = Eigen::MatrixXd::Identity(nTs, nTs) * 1e-12 + (M.transpose() * M);
+  Q_ =  (M.transpose() * M);
   p_ = (-M.transpose() * Ts_candidate);
   // std::cout << Aeq << std::endl;
   // std::cout << beq << std::endl;
@@ -443,7 +461,7 @@ Steps_timings_output FootStepGen::Get_constrained_Ts(const Eigen::VectorXd & Ts_
   Output.loss = (Output.Ts - Ts_candidate).norm();
 
   std::chrono::duration<double, std::milli> time_span = std::chrono::high_resolution_clock::now() - t_clock;
-  double ProcessTime = time_span.count();
+  // double ProcessTime = time_span.count();
   // mc_rtc::log::success("Time QP gened in: {}  ms", ProcessTime);
 
   return Output;
@@ -628,24 +646,24 @@ Footsteps_plan FootStepGen::compute_plan()
     }
   }
 
-  int N_cstr = 0;
-  for(int k = 0; k < Normal_Vec.size(); k++)
+  Eigen::Index N_cstr = 0;
+  for(size_t k = 0; k < static_cast<size_t>(Normal_Vec.size()); k++)
   {
-    N_cstr += (int)Normal_Vec[k].rows();
+    N_cstr += Normal_Vec[k].rows();
   }
 
   Aineq = Eigen::MatrixXd::Zero(N_cstr, 2 * F_);
   bineq = Eigen::VectorXd::Zero(N_cstr);
 
-  int step_indx = 0;
-  int cstr_index = 0;
-  for(int i_ineq = 0; i_ineq < Normal_Vec.size(); i_ineq++)
+  Eigen::Index step_indx = 0;
+  Eigen::Index cstr_index = 0;
+  for(size_t i_ineq = 0; i_ineq < Normal_Vec.size(); i_ineq++)
   {
 
     Eigen::MatrixXd n_vec = Normal_Vec[i_ineq];
     Eigen::VectorXd ineq = cstr_vec[i_ineq];
 
-    for(int cstr = 0; cstr < n_vec.rows(); cstr++)
+    for(Eigen::Index cstr = 0; cstr < n_vec.rows(); cstr++)
     {
 
       Aineq(cstr_index + cstr, step_indx) = n_vec(cstr, 0);
@@ -691,15 +709,15 @@ Footsteps_plan FootStepGen::compute_plan()
 
   plan_.ori_offset(theta_offset_);
 
-  for(int k = 0; k < F_; k++)
+  for(Eigen::Index k = 0; k < F_; k++)
   {
     double xf = XY(2 * k);
     double yf = XY(2 * k + 1);
-    plan_.add(Footstep(Eigen::Vector2d{xf, yf}, Theta_f_(k), StepsTimings_[k], Eigen::Vector2d{0.1, 0.1}));
+    plan_.add(Footstep(Eigen::Vector2d{xf, yf}, Theta_f_(k), StepsTimings_[static_cast<size_t>(k)], Eigen::Vector2d{0.1, 0.1}));
   }
   // mc_rtc::log::success("Position OK");
   std::chrono::duration<double, std::milli> time_span = std::chrono::high_resolution_clock::now() - t_clock;
-  double ProcessTime = time_span.count();
+  // double ProcessTime = time_span.count();
   // mc_rtc::log::success("FootSteps computed in : {} ms",ProcessTime);
   return plan_;
 }
@@ -756,9 +774,9 @@ Eigen::VectorXd FootStepGen::solveQP()
 
   Eigen::QuadProgDense QP;
 
-  int Nvar = Q_.rows();
-  int NIneqConstr = Aineq.rows();
-  int NEqConstr = Aeq.rows();
+  int Nvar = static_cast<int>(Q_.rows());
+  int NIneqConstr = static_cast<int>(Aineq.rows());
+  int NEqConstr = static_cast<int>(Aeq.rows());
   // QP.tolerance(1e-4);
   QP.problem(Nvar, NEqConstr, NIneqConstr);
   QPsuccess = QP.solve(Q_, p_, Aeq, beq, Aineq, bineq);
@@ -766,10 +784,10 @@ Eigen::VectorXd FootStepGen::solveQP()
   return QP.result();
 }
 
-ref_traj_point FootStepGen::IntegrateVelProfile(int k_end)
+ref_traj_point FootStepGen::IntegrateVelProfile(size_t k_end)
 {
 
-  int k_start = 0;
+  size_t k_start = 0;
   if(k_end < P_traj_.size())
   {
     return P_traj_[k_end];
@@ -795,7 +813,7 @@ ref_traj_point FootStepGen::IntegrateVelProfile(int k_end)
     k_start = P_traj_.size() - 1;
   }
 
-  for(int i = k_start; i < std::min(k_end, (int)v_inputs_.size()); i++)
+  for(size_t i = k_start; i < std::min(k_end, v_inputs_.size()); i++)
   {
     Output.ori_ += v_inputs_[i].angular().z() * delta_;
     Output.pose_ += sva::RotZ(-Output.ori_).block(0, 0, 2, 2) * v_inputs_[i].linear().segment(0, 2) * delta_;
@@ -804,10 +822,10 @@ ref_traj_point FootStepGen::IntegrateVelProfile(int k_end)
   return Output;
 }
 
-int FootStepGen::Get_ki(int k, int kfoot)
+size_t FootStepGen::Get_ki(size_t k, size_t kfoot)
 {
   std::chrono::high_resolution_clock::time_point t_clock = std::chrono::high_resolution_clock::now();
-  int ki = k;
+  size_t ki = k;
   ref_traj_point P_ki(P_traj_[ki]);
   double dist_i = (P_ki.pose() - steps_inputs_[kfoot].pose()).norm();
   ref_traj_point P_kip1(P_traj_[ki + 1]);
@@ -825,11 +843,11 @@ int FootStepGen::Get_ki(int k, int kfoot)
     {
       ki += 1;
       dist_i = dist_ip1;
-      if(ki + 1 > (int)(Tp_ / delta_))
+      if(ki + 1 > (size_t)(Tp_ / delta_))
       {
         break;
       }
-      P_kip1 = P_traj_[std::min(ki + 1, (int)P_traj_.size() - 1)];
+      P_kip1 = P_traj_[std::min(ki + 1, P_traj_.size() - 1)];
       dist_ip1 = (P_kip1.pose() - steps_inputs_[kfoot].pose()).norm();
     }
   }
@@ -839,12 +857,12 @@ int FootStepGen::Get_ki(int k, int kfoot)
     {
       ki -= 1;
       dist_i = dist_im1;
-      P_kim1 = P_traj_[std::min(ki - 1, (int)P_traj_.size() - 1)];
+      P_kim1 = P_traj_[std::min(ki - 1, P_traj_.size() - 1)];
       dist_im1 = (P_kim1.pose() - steps_inputs_[kfoot].pose()).norm();
     }
   }
   std::chrono::duration<double, std::milli> time_span = std::chrono::high_resolution_clock::now() - t_clock;
-  double ProcessTime = time_span.count();
+  // double ProcessTime = time_span.count();
   // mc_rtc::log::success("Get ki time: " + std::to_string(ProcessTime) + " ms");
   return ki;
 }
