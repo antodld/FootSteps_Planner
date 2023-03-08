@@ -59,13 +59,14 @@ void footsteps_planner_plugin::compute_footsteps_plan(mc_control::MCController &
 {
 
   auto & datastore = controller.datastore();
-  auto & support_foot_pose = datastore.get<sva::PTransformd>("footsteps_planner::support_foot_pose");
-  auto & input_footsteps_pose = datastore.get<std::vector<sva::PTransformd>>("footsteps_planner::input_steps");
-  auto & input_v = datastore.get<std::vector<sva::MotionVecd>>("footsteps_planner::input_vel");
-  auto & input_t_steps = datastore.get<std::vector<double>>("footsteps_planner::input_time_steps");
-  auto & support_foot_name = datastore.get<std::string>("footsteps_planner::support_foot_name");
+  auto support_foot_pose = datastore.get<sva::PTransformd>("footsteps_planner::support_foot_pose");
+  auto input_footsteps_pose = datastore.get<std::vector<sva::PTransformd>>("footsteps_planner::input_steps");
+  auto input_v = datastore.get<std::vector<sva::MotionVecd>>("footsteps_planner::input_vel");
+  auto input_t_steps = datastore.get<std::vector<double>>("footsteps_planner::input_time_steps");
+  auto support_foot_name = datastore.get<std::string>("footsteps_planner::support_foot_name");
 
-  mc_plugin::footsteps_planner::Footstep support_footstep(support_foot_pose, 0, Eigen::Vector2d::Ones() * 0.1);
+  const Eigen::Vector2d size = Eigen::Vector2d::Ones() * 0.1;
+  mc_plugin::footsteps_planner::Footstep support_footstep(support_foot_pose, 0, size);
   std::vector<mc_plugin::footsteps_planner::Footstep> input_footsteps;
 
   for(int k = 0; k < input_footsteps_pose.size(); k++)

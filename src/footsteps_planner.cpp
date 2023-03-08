@@ -7,9 +7,9 @@ namespace footsteps_planner
 
 void FootStepGen::init(std::string supportFootName,
                        Footstep P_f0,
-                       const std::vector<sva::MotionVecd> & V,
-                       const std::vector<double> & Tstep,
-                       std::vector<Footstep> & Pf)
+                       const std::vector<sva::MotionVecd> V,
+                       const std::vector<double> Tstep,
+                       std::vector<Footstep> Pf)
 {
 
   std::chrono::high_resolution_clock::time_point t_clock = std::chrono::high_resolution_clock::now();

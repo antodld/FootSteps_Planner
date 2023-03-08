@@ -204,10 +204,10 @@ struct Footsteps_plan
 
 public:
   Footsteps_plan() = default;
-  inline Footsteps_plan(const Footstep & support_foot,
-                        const std::string & supportFoot_name,
-                        const Footstep & initial_swing_foot,
-                        const std::vector<Footstep> & footsteps)
+  Footsteps_plan(const Footstep support_foot,
+                  const std::string supportFoot_name,
+                  const Footstep initial_swing_foot,
+                  const std::vector<Footstep> footsteps)
   {
     footsteps_ = footsteps;
     support_foot_name(supportFoot_name);
@@ -353,9 +353,9 @@ public:
    */
   void init(std::string supportFootName,
             Footstep P_f0,
-            const std::vector<sva::MotionVecd> & V,
-            const std::vector<double> & Tstep,
-            std::vector<Footstep> & Pf);
+            const std::vector<sva::MotionVecd> V,
+            const std::vector<double> Tstep,
+            std::vector<Footstep> Pf);
 
   void reconfigure(const mc_rtc::Configuration & config);
 
@@ -408,8 +408,8 @@ private:
 
   // Compute the Steps Timing dependings of the given parameter
   void GetStepsTimings();
-  Steps_timings_output Get_constrained_Ts(const Eigen::VectorXd & Ts_candidate,
-                                          const std::vector<Eigen::Vector2d> & StepsTimings_Upper_Lower_cstr);
+  Steps_timings_output Get_constrained_Ts(const Eigen::VectorXd Ts_candidate,
+                                          const std::vector<Eigen::Vector2d> StepsTimings_Upper_Lower_cstr);
 
   /**
    * return the position of the reference velocity integratin the velocity profile
