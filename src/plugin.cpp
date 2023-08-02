@@ -43,19 +43,19 @@ void footsteps_planner_plugin::init(mc_control::MCGlobalController & controller,
 void footsteps_planner_plugin::reset(mc_control::MCGlobalController & controller)
 {
   const double t = controller.timestep();
-  mc_rtc::log::info("footsteps_planner::reset called {}",t);
+  mc_rtc::log::info("footsteps_planner::reset called {}", t);
 }
 
 void footsteps_planner_plugin::before(mc_control::MCGlobalController & controller)
 {
   const double t = controller.timestep();
-  mc_rtc::log::info("footsteps_planner::before {}",t);
+  mc_rtc::log::info("footsteps_planner::before {}", t);
 }
 
 void footsteps_planner_plugin::after(mc_control::MCGlobalController & controller)
 {
   const double t = controller.timestep();
-  mc_rtc::log::info("footsteps_planner::after {}",t);
+  mc_rtc::log::info("footsteps_planner::after {}", t);
 }
 
 void footsteps_planner_plugin::compute_footsteps_plan(mc_control::MCController & controller)
@@ -74,10 +74,9 @@ void footsteps_planner_plugin::compute_footsteps_plan(mc_control::MCController &
 
   for(size_t k = 0; k < input_footsteps_pose.size(); k++)
   {
-    input_footsteps.push_back(
-        mc_plugin::footsteps_planner::Footstep(input_footsteps_pose[k], 0, size));
+    input_footsteps.push_back(mc_plugin::footsteps_planner::Footstep(input_footsteps_pose[k], 0, size));
   }
-  
+
   planner_.init(support_foot_name, support_footstep, input_v, input_t_steps, input_footsteps);
 
   planner_.compute_plan();
@@ -92,9 +91,10 @@ void footsteps_planner_plugin::gui(mc_control::MCGlobalController & controller)
 {
 
   controller.controller().gui()->addElement(
-      {"Footsteps Planner"},
-      mc_rtc::gui::Trajectory("Trajectory", mc_rtc::gui::Color(1., 1., 0.),
-                              [this]() -> std::vector<Eigen::Vector3d> { return planner_.ref_traj(centered_ref_trajectory_); })
+      {"Footsteps Planner"}, mc_rtc::gui::Trajectory("Trajectory", mc_rtc::gui::Color(1., 1., 0.),
+                                                     [this]() -> std::vector<Eigen::Vector3d> {
+                                                       return planner_.ref_traj(centered_ref_trajectory_);
+                                                     })
 
       // mc_rtc::gui::Polygon("Steps", mc_rtc::gui::Color(0., 1., 0.),
       //                      [this]() -> std::vector<std::vector<Eigen::Vector3d>> {
