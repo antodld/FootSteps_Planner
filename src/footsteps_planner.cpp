@@ -188,7 +188,7 @@ void FootStepGen::GetStepsTimings()
       double ti = static_cast<double>(v_inputs_.size()) * delta_;
       size_t kTsteps = 0;
 
-      while(t_steps_inputs_[kTsteps] - ti < Ts_min_ && kTsteps < t_steps_inputs_.size())
+      while(kTsteps < t_steps_inputs_.size() && t_steps_inputs_[kTsteps] - ti < Ts_min_)
       {
         kTsteps += 1;
       }
