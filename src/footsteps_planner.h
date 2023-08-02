@@ -18,9 +18,8 @@ struct Admissible_Region
 public:
   Admissible_Region() = default;
 
-  Admissible_Region(sva::PTransformd center, const Eigen::Vector2d & size)
+  Admissible_Region(const sva::PTransformd & center, const Eigen::Vector2d & size)
   {
-
     compute_region(center.translation().segment(0, 2), mc_rbdyn::rpyFromMat(center.rotation()).z(), size);
   }
   Admissible_Region(const Eigen::Vector3d & center, const Eigen::Vector3d & size)
@@ -83,14 +82,14 @@ public:
   Eigen::VectorXd Offset;
 
 private:
-  Eigen::Vector3d _center;
-  Eigen::Vector3d _size;
-  double _angle;
-  Eigen::Matrix3d R;
-  Eigen::Vector3d upper_left_corner;
-  Eigen::Vector3d upper_right_corner;
-  Eigen::Vector3d lower_left_corner;
-  Eigen::Vector3d lower_right_corner;
+  Eigen::Vector3d _center = Eigen::Vector3d::Zero();
+  Eigen::Vector3d _size = Eigen::Vector3d::Zero();
+  double _angle = 0.0;
+  Eigen::Matrix3d R = Eigen::Matrix3d::Zero();
+  Eigen::Vector3d upper_left_corner = Eigen::Vector3d::Zero();
+  Eigen::Vector3d upper_right_corner = Eigen::Vector3d::Zero();
+  Eigen::Vector3d lower_left_corner = Eigen::Vector3d::Zero();
+  Eigen::Vector3d lower_right_corner = Eigen::Vector3d::Zero();
   Eigen::MatrixXd Polygone_Vertices;
   Eigen::MatrixXd Polygone_Edges_Center;
 };
@@ -110,19 +109,19 @@ struct ref_traj_point
 {
 
   ref_traj_point() = default;
-  ref_traj_point(Eigen::Vector2d pose, double ori)
+  ref_traj_point(const Eigen::Vector2d & pose, double ori)
   {
     pose_ = pose;
     ori_ = ori;
   }
-  ref_traj_point(sva::PTransformd pose)
+  ref_traj_point(const sva::PTransformd & pose)
   {
     pose_ = pose.translation().segment(0, 2);
     ori_ = mc_rbdyn::rpyFromMat(pose.rotation()).z();
   }
   ~ref_traj_point() = default;
 
-  Eigen::Vector2d pose()
+  const Eigen::Vector2d & pose()
   {
     return pose_;
   }
@@ -148,8 +147,8 @@ struct ref_traj_point
     ori_ = theta;
   }
 
-  Eigen::Vector2d pose_;
-  double ori_;
+  Eigen::Vector2d pose_ = Eigen::Vector2d::Zero();
+  double ori_ = 0.0;
 };
 
 struct Footstep : public mc_plugin::footsteps_planner::ref_traj_point
@@ -160,20 +159,16 @@ public:
   Footstep(const sva::PTransformd & pose, double ts, const Eigen::Vector2d & step_size)
   : mc_plugin::footsteps_planner::ref_traj_point(pose)
   {
+    step_size_ = step_size;
     ts_ = ts;
-    Eigen::Vector3d center{pose_.x(), pose_.y(), ori_};
-    Eigen::Vector3d dim{step_size.x(), step_size.y(), 0.};
-    step_rect_ = Admissible_Region(center, dim);
+    init();
   }
   Footstep(const Eigen::Vector2d & pose, const double ori, double ts, const Eigen::Vector2d & step_size)
   : mc_plugin::footsteps_planner::ref_traj_point(pose, ori)
   {
     step_size_ = step_size;
-
     ts_ = ts;
-    Eigen::Vector3d center{pose_.x(), pose_.y(), ori_};
-    Eigen::Vector3d dim{step_size_.x(), step_size_.y(), 0.};
-    step_rect_ = Admissible_Region(center, dim);
+    init();
   }
   ~Footstep() = default;
 
@@ -188,15 +183,20 @@ public:
   }
   Eigen::Vector3d pose3()
   {
-    return Eigen::Vector3d{pose_.x(),pose_.y(),0};
+    return Eigen::Vector3d{pose_.x(), pose_.y(), 0};
   }
 
 private:
-  Eigen::Vector2d pose_;
   Eigen::Vector2d step_size_;
-  double ori_;
   Admissible_Region step_rect_;
   double ts_;
+
+  inline void init() noexcept
+  {
+    Eigen::Vector3d center{pose_.x(), pose_.y(), ori_};
+    Eigen::Vector3d dim{step_size_.x(), step_size_.y(), 0.};
+    step_rect_ = Admissible_Region(center, dim);
+  }
 };
 
 struct Footsteps_plan
@@ -205,9 +205,9 @@ struct Footsteps_plan
 public:
   Footsteps_plan() = default;
   Footsteps_plan(const Footstep support_foot,
-                  const std::string supportFoot_name,
-                  const Footstep initial_swing_foot,
-                  const std::vector<Footstep> footsteps)
+                 const std::string supportFoot_name,
+                 const Footstep initial_swing_foot,
+                 const std::vector<Footstep> footsteps)
   {
     footsteps_ = footsteps;
     support_foot_name(supportFoot_name);
@@ -369,12 +369,14 @@ public:
   std::vector<Eigen::Vector3d> ref_traj(bool centered)
   {
     std::vector<Eigen::Vector3d> Output;
-    
 
     for(size_t k = 0; k < P_traj_.size(); k++)
-    {  
+    {
       Eigen::Vector3d offset = P_traj_[0].vec3_pose();
-      if(centered){offset = Eigen::Vector3d::Zero();}
+      if(centered)
+      {
+        offset = Eigen::Vector3d::Zero();
+      }
       Output.push_back(P_traj_[k].vec3_pose() - offset);
     }
     return Output;
