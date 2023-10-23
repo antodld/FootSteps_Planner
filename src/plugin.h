@@ -18,9 +18,9 @@ struct footsteps_planner_plugin : public mc_control::GlobalPlugin
 
   void reset(mc_control::MCGlobalController & controller) override;
 
-  void before(mc_control::MCGlobalController &) override;
+  void before(mc_control::MCGlobalController &) override {}
 
-  void after(mc_control::MCGlobalController & controller) override;
+  void after(mc_control::MCGlobalController &) override {}
 
   void compute_footsteps_plan(mc_control::MCController & controller);
 
@@ -43,6 +43,8 @@ private:
 
   std::vector<sva::PTransformd> output_steps_;
   std::vector<double> output_t_steps_;
+
+  mc_rtc::Configuration config_;
 };
 
 } // namespace mc_plugin
