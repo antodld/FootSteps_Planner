@@ -355,7 +355,7 @@ public:
             Footstep P_f0,
             const std::vector<sva::MotionVecd> V,
             const std::vector<double> Tstep,
-            std::vector<Footstep> Pf);
+            std::vector<Footstep> ref_pose);
 
   void reconfigure(const mc_rtc::Configuration & config);
 
@@ -401,7 +401,7 @@ private:
    * Compute N points trajectory between P_s_0 and P_s_1
    * @return Points Coordonate and angle of the trajectory
    */
-  std::vector<ref_traj_point> GetRefTrajectory(ref_traj_point & P_s_0, ref_traj_point & P_s_1);
+  std::vector<ref_traj_point> GetRefTrajectory(ref_traj_point & P_s_0, ref_traj_point & P_s_1, const double duration);
 
   std::vector<std::vector<double>> GetVelocityProfile(const Eigen::Vector3d & P_s_0,
                                                       double V_Max,
@@ -410,8 +410,6 @@ private:
 
   // Compute the Steps Timing dependings of the given parameter
   void GetStepsTimings();
-  Steps_timings_output Get_constrained_Ts(const Eigen::VectorXd Ts_candidate,
-                                          const std::vector<Eigen::Vector2d> StepsTimings_Upper_Lower_cstr);
 
   /**
    * return the position of the reference velocity integratin the velocity profile
@@ -419,13 +417,13 @@ private:
    * @return Coordinate of the integrated ref velocity at time index k with orientation in z
    */
   ref_traj_point IntegrateVelProfile(size_t k_end);
-  size_t Get_ki(size_t k, size_t kfoot);
 
   std::string supportFoot = "RightFoot";
 
   HoubaPolynomial<Eigen::Vector2d> path;
 
   Footsteps_plan plan_;
+  std::vector<Footstep> pose_reference_;
   std::vector<Footstep> steps_inputs_;
   std::vector<double> t_steps_inputs_; // Input Step Timing
   std::vector<sva::MotionVecd> v_inputs_; // Velocity input
@@ -465,6 +463,8 @@ public:
   double Ts_ = 5.0; // Cruise Parameters
   double robot_height_ = 150; // in cm
   double theta_offset_ = 0;
+
+  Eigen::Vector3d v_ref_ = Eigen::Vector3d::Zero();
 };
 
 } // namespace footsteps_planner

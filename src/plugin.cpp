@@ -20,7 +20,7 @@ void footsteps_planner_plugin::reset(mc_control::MCGlobalController & controller
   }
   controller.controller().datastore().make<mc_rtc::Configuration>("footsteps_planner::planner_config");
   controller.controller().datastore().make<std::vector<sva::MotionVecd>>("footsteps_planner::input_vel");
-  controller.controller().datastore().make<std::vector<sva::PTransformd>>("footsteps_planner::input_steps");
+  controller.controller().datastore().make<std::vector<sva::PTransformd>>("footsteps_planner::input_ref_pose");
   controller.controller().datastore().make<std::vector<double>>("footsteps_planner::input_time_steps");
   controller.controller().datastore().make<std::string>("footsteps_planner::support_foot_name");
   controller.controller().datastore().make<sva::PTransformd>("footsteps_planner::support_foot_pose");
@@ -46,7 +46,6 @@ void footsteps_planner_plugin::reset(mc_control::MCGlobalController & controller
   {
     planner_ = mc_plugin::footsteps_planner::FootStepGen(config);
   }
-
   gui(controller);
 }
 
@@ -55,21 +54,22 @@ void footsteps_planner_plugin::compute_footsteps_plan(mc_control::MCController &
 
   auto & datastore = controller.datastore();
   auto support_foot_pose = datastore.get<sva::PTransformd>("footsteps_planner::support_foot_pose");
-  auto input_footsteps_pose = datastore.get<std::vector<sva::PTransformd>>("footsteps_planner::input_steps");
+  auto ref_pose = datastore.get<std::vector<sva::PTransformd>>("footsteps_planner::input_ref_pose");
   auto input_v = datastore.get<std::vector<sva::MotionVecd>>("footsteps_planner::input_vel");
   auto input_t_steps = datastore.get<std::vector<double>>("footsteps_planner::input_time_steps");
   auto support_foot_name = datastore.get<std::string>("footsteps_planner::support_foot_name");
 
   const Eigen::Vector2d size = Eigen::Vector2d::Ones() * 0.1;
   mc_plugin::footsteps_planner::Footstep support_footstep(support_foot_pose, 0, size);
-  std::vector<mc_plugin::footsteps_planner::Footstep> input_footsteps;
+  std::vector<mc_plugin::footsteps_planner::Footstep> input_ref_pose;
 
-  for(size_t k = 0; k < input_footsteps_pose.size(); k++)
+  for(size_t k = 0; k < ref_pose.size(); k++)
   {
-    input_footsteps.push_back(mc_plugin::footsteps_planner::Footstep(input_footsteps_pose[k], 0, size));
+    input_ref_pose.push_back(
+        mc_plugin::footsteps_planner::Footstep(ref_pose[k], 0, size));
   }
-
-  planner_.init(support_foot_name, support_footstep, input_v, input_t_steps, input_footsteps);
+  
+  planner_.init(support_foot_name, support_footstep, input_v, input_t_steps, input_ref_pose);
 
   planner_.compute_plan();
 
