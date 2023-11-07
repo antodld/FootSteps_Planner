@@ -191,10 +191,6 @@ Footsteps_plan FootStepGen::compute_plan()
   {
 
     b(i) = P_traj_[StepsTimings_indx_[i]].ori();
-    if(std::abs(b(i)) > M_PI)
-    {
-      b(i) -= (b(i) / std::abs(b(i))) * 2 * M_PI;
-    }
 
   }
   Q_ = Eigen::MatrixXd::Identity(F_, F_);
@@ -218,10 +214,6 @@ Footsteps_plan FootStepGen::compute_plan()
     }
   }
 
-  // mc_rtc::log::info("Theta o ori {}", plan_.support_foot().ori());
-  // mc_rtc::log::info("Theta out {}", Theta_f_);
-  // mc_rtc::log::info(b);
-  // std::cout << "Theta" << std::endl;
 
   // Solving QP 2 For placement
 
@@ -351,7 +343,7 @@ Footsteps_plan FootStepGen::compute_plan()
   Eigen::VectorXd XY(solveQP());
   if(!QPsuccess)
   {
-    mc_rtc::log::error("Step QP failed");
+    mc_rtc::log::error("[Footsteps planner] Step QP failed");
   }
 
   // mc_rtc::log::info("Step out F {}\n{}", F_, XY);
