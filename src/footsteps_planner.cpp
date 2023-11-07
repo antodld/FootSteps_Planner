@@ -369,16 +369,23 @@ Footsteps_plan FootStepGen::compute_plan()
     // const Eigen::Matrix2d R_sup_1 =  plan_.steps_PTpose()[0].rotation().block(0,0,2,2).transpose();
     const Eigen::Vector2d coeff = A.inverse() * (plan_.steps_pose()[0].segment(0,2) - plan_.support_foot().pose());
     intersec = plan_.support_foot().pose() + R_sup_0 * Eigen::Vector2d{1,0} * coeff(0);
-    const double proj = (plan_.steps_pose()[0].segment(0,2) - plan_.support_foot().pose()).normalized().transpose() * (intersec - plan_.support_foot().pose());
+    const double proj = (intersec - plan_.support_foot().pose()).transpose() * (plan_.steps_pose()[0].segment(0,2) - plan_.support_foot().pose()).normalized();
 
     r = (intersec - plan_.support_foot().pose()) - (plan_.steps_pose()[0].segment(0,2) - plan_.support_foot().pose()).normalized() * proj;
-    if((R_sup_0.transpose() * r).x() > 0 && r.norm() < 5)
+    if((R_sup_0.transpose() * r).x() > 0 && r.norm() < 1)
     {
-      mc_rtc::log::warning("[Footsteps planner] Potential Legs collision");
+      if(!legs_warning_on)
+      {
+        mc_rtc::log::warning("[Footsteps planner] Potential Legs collision");
+        legs_warning_on = true;
+      }
       // Eigen::Vector2d step_pose = plan_.steps_PTpose()[0].translation().segment(0,2) + R_sup_1.transpose() * Eigen::Vector2d{0,sgn * 0.1};
       // plan_.edit(Footstep(step_pose, (plan_.steps()[0]).ori_, StepsTimings_[0],Eigen::Vector2d{0.1, 0.1}),0);
       plan_.edit(Footstep(plan_.steps()[0].pose_, plan_.support_foot().ori(), StepsTimings_[0],Eigen::Vector2d{0.1, 0.1}),0);
-
+    }
+    else
+    {
+      legs_warning_on = false;
     }
   }
 
@@ -434,20 +441,21 @@ std::vector<ref_traj_point> FootStepGen::GetRefTrajectory(ref_traj_point & P_s_0
       Eigen::Vector2d pos_t = path.pos(t);
       Eigen::Vector2d ori_t = path.tangent(t);
       double theta = atan2(ori_t.y(), ori_t.x());
-      // std::cout << "theta :" << theta  << std::endl;
+      std::cout << "theta :" << theta  << std::endl;
       if((init_pose - target_pose).norm() < 5e-2)
       {
         theta = P_s_1.ori();
       }
       if(backward)
       {
-        Output.push_back(ref_traj_point(pos_t, theta - M_PI));
+        const double sgn = theta / std::abs(theta);
+        Output.push_back(ref_traj_point(pos_t, std::fmod(theta - sgn * M_PI, 2 * M_PI)));
       }
       else
       {
-        Output.push_back(ref_traj_point(pos_t, theta));
+        Output.push_back(ref_traj_point(pos_t, std::fmod(theta, 2 * M_PI)));
       }
-      // std::cout << "in traj :" <<Output.back().ori() << std::endl;
+      std::cout << "in traj :" <<Output.back().ori() << std::endl;
     }
     else
     {

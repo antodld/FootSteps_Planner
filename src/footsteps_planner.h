@@ -464,6 +464,9 @@ private:
 
   Eigen::MatrixXd Aineq; // Inequality Matrix
   Eigen::VectorXd bineq; // Inequality Vector
+
+  bool legs_warning_on = false;
+  
 public:
   double Ts_min_ = 0.8; // Step Time lenght limits
   double Ts_max_ = 2; // Step Time lenght limits
