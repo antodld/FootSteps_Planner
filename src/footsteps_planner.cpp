@@ -441,7 +441,6 @@ std::vector<ref_traj_point> FootStepGen::GetRefTrajectory(ref_traj_point & P_s_0
       Eigen::Vector2d pos_t = path.pos(t);
       Eigen::Vector2d ori_t = path.tangent(t);
       double theta = atan2(ori_t.y(), ori_t.x());
-      std::cout << "theta :" << theta  << std::endl;
       if((init_pose - target_pose).norm() < 5e-2)
       {
         theta = P_s_1.ori();
@@ -455,7 +454,6 @@ std::vector<ref_traj_point> FootStepGen::GetRefTrajectory(ref_traj_point & P_s_0
       {
         Output.push_back(ref_traj_point(pos_t, std::fmod(theta, 2 * M_PI)));
       }
-      std::cout << "in traj :" <<Output.back().ori() << std::endl;
     }
     else
     {
