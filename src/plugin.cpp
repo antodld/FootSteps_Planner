@@ -86,7 +86,14 @@ void footsteps_planner_plugin::gui(mc_control::MCGlobalController & controller)
       {"Footsteps Planner"}, mc_rtc::gui::Trajectory("Trajectory", mc_rtc::gui::Color(1., 1., 0.),
                                                      [this]() -> std::vector<Eigen::Vector3d> {
                                                        return planner_.ref_traj(centered_ref_trajectory_);
-                                                     })
+                                                     }),
+      mc_rtc::gui::Point3D(
+      "Intersec", mc_rtc::gui::Color(0., 1., 0.),
+      [this]() -> Eigen::Vector3d { return Eigen::Vector3d{this->planner_.intersec.x(),this->planner_.intersec.y(),0}; } ,
+        [this](const Eigen::Vector3d & p) {this->planner_.intersec = p.segment(0,2);}),
+      
+      mc_rtc::gui::Arrow("Dist",[this]() -> Eigen::Vector3d {Eigen::Vector3d p = Eigen::Vector3d::Zero(); p.segment(0,2) = this->planner_.intersec - this->planner_.r; return p;},
+                                [this]() -> Eigen::Vector3d {Eigen::Vector3d p = Eigen::Vector3d::Zero(); p.segment(0,2) = this->planner_.intersec; return p;})
 
       // mc_rtc::gui::Polygon("Steps", mc_rtc::gui::Color(0., 1., 0.),
       //                      [this]() -> std::vector<std::vector<Eigen::Vector3d>> {

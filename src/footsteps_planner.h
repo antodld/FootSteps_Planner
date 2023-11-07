@@ -185,6 +185,10 @@ public:
   {
     return Eigen::Vector3d{pose_.x(), pose_.y(), 0};
   }
+  const Eigen::Vector2d & size()
+  {
+    return step_size_;
+  }
 
 private:
   Eigen::Vector2d step_size_;
@@ -225,6 +229,10 @@ public:
     }
     step.ori(step.ori() + ori_offset_ * std::pow(-1, footsteps_.size() + i));
     footsteps_.push_back(step);
+  }
+  void edit(const Footstep & step , const size_t indx)
+  {
+    footsteps_[indx] = step;
   }
   void clear()
   {
@@ -393,6 +401,9 @@ public:
   {
     return N_steps;
   }
+
+  Eigen::Vector2d intersec = Eigen::Vector2d::Zero();
+  Eigen::Vector2d r = Eigen::Vector2d::Zero();
 
 private:
   Eigen::VectorXd solveQP();

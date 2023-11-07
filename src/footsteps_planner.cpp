@@ -365,6 +365,30 @@ Footsteps_plan FootStepGen::compute_plan()
     plan_.add(Footstep(Eigen::Vector2d{xf, yf}, Theta_f_(k), StepsTimings_[static_cast<size_t>(k)],
                        Eigen::Vector2d{0.1, 0.1}));
   }
+
+  const double theta_legs_0 = plan_.support_foot().ori();
+  const double theta_legs_1 = Theta_f_(0);
+
+  Eigen::Matrix2d A;
+  A.block(0,0,2,1) << cos(theta_legs_0),sin(theta_legs_0);
+  A.block(0,1,2,1) << -cos(theta_legs_1),-sin(theta_legs_1);
+  if(A.determinant() != 0)
+  {
+    const Eigen::Matrix2d R_sup_0 =  plan_.support_foot().PT_pose().rotation().block(0,0,2,2).transpose();
+    // const Eigen::Matrix2d R_sup_1 =  plan_.steps_PTpose()[0].rotation().block(0,0,2,2).transpose();
+    const Eigen::Vector2d coeff = A.inverse() * (plan_.steps_pose()[0].segment(0,2) - plan_.support_foot().pose());
+    intersec = plan_.support_foot().pose() + R_sup_0 * Eigen::Vector2d{1,0} * coeff(0);
+    double proj = (plan_.steps_pose()[0].segment(0,2) - plan_.support_foot().pose()).transpose() * (intersec - plan_.support_foot().pose());
+
+    r = (intersec - plan_.support_foot().pose()) - (plan_.steps_pose()[0].segment(0,2) - plan_.support_foot().pose()) * proj;
+    if( r.x() > 0 && r.norm() < 1)
+    {
+      mc_rtc::log::warning("[Footsteps planner] Potential Legs collision, the next step will keep the support foot orientation");
+      plan_.edit(Footstep(Eigen::Vector2d{XY(0), XY(1)}, plan_.support_foot().ori(), StepsTimings_[0],Eigen::Vector2d{0.1, 0.1}),0);
+    }
+  }
+
+
   // mc_rtc::log::success("Position OK");
   std::chrono::duration<double, std::milli> time_span = std::chrono::high_resolution_clock::now() - t_clock;
   // double ProcessTime = time_span.count();
