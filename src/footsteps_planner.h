@@ -468,6 +468,7 @@ public:
   double Ts_min_ = 0.8; // Step Time lenght limits
   double Ts_max_ = 2; // Step Time lenght limits
   double l_ = 0.2; // Distance between foot
+  double d_min = 0.34; //min distance between the foot center and the kinematic constraint;
   double Tp_ = 6; // Preview horizon time
   double delta_ = 5e-2; // t_k - t_k-1
   double d_h_x = 0.2; // Next step tolerance zone

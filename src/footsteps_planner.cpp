@@ -221,6 +221,11 @@ Footsteps_plan FootStepGen::compute_plan()
   {
     sgn = 1.0;
   }
+  double l = l_;
+  if(d_h_y/2 > l_ - 0.5 * d_min)
+  {
+    l = 0.5 * (d_h_y + d_min);
+  }
 
   std::vector<Eigen::VectorXd> cstr_vec;
   std::vector<Eigen::MatrixX2d> Normal_Vec;
