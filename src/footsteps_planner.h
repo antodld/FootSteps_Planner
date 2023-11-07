@@ -247,6 +247,10 @@ public:
     }
     return Output;
   }
+  const std::vector<Footstep> & steps()
+  {
+    return footsteps_;
+  }
   std::vector<Eigen::Vector3d> steps_pose()
   {
     std::vector<Eigen::Vector3d> output;

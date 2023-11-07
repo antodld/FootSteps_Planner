@@ -50,11 +50,6 @@ void FootStepGen::init(std::string supportFootName,
   }
   pose_reference_ = ref_pose;
 
-
-  // mc_rtc::log::info("Sizes at start");
-  // mc_rtc::log::info(P_traj_.size());
-  // mc_rtc::log::info(v_inputs_.size());
-
   std::chrono::duration<double, std::milli> time_span = std::chrono::high_resolution_clock::now() - t_clock;
   // double ProcessTime = time_span.count();
   // std::cout << "Footstep plan init done" << std::endl;
@@ -154,8 +149,6 @@ Footsteps_plan FootStepGen::compute_plan()
 
   for(int k = 0; k < F_; ++k)
   {
-    // std::cout << "Theta k " << k << std::endl;
-
     if(k == 0)
     {
       Dtheta_upper_lim(k) += plan_.support_foot().ori();
@@ -181,6 +174,7 @@ Footsteps_plan FootStepGen::compute_plan()
     }
   }
 
+
   Aineq = Eigen::MatrixXd::Zero(2 * Delta.rows(), F_);
   bineq = Eigen::VectorXd::Zero(Aineq.rows());
   Aineq << Delta, -Delta;
@@ -198,7 +192,7 @@ Footsteps_plan FootStepGen::compute_plan()
   Eigen::VectorXd theta = solveQP();
   if(!QPsuccess)
   {
-    mc_rtc::log::error("Step theta failed");
+    mc_rtc::log::error("[Footsteps planner] Step theta failed");
   }
 
   for(int k = 0; k < theta.size(); k++)
@@ -240,7 +234,7 @@ Footsteps_plan FootStepGen::compute_plan()
 
   Eigen::VectorXd bcstr = Kinematic_Rectangle.Offset
                           + Kinematic_Rectangle.Polygone_Normals.transpose()
-                                * (plan_.support_foot().pose() + sgn * R_Theta_0 * Eigen::Vector2d{0, l_});
+                                * (plan_.support_foot().pose() + sgn * R_Theta_0 * Eigen::Vector2d{0, l});
 
   Normal_Vec.push_back(Kinematic_Rectangle.Polygone_Normals.transpose());
   cstr_vec.push_back(bcstr);
@@ -260,7 +254,7 @@ Footsteps_plan FootStepGen::compute_plan()
 
     bcstr = Kinematic_Rectangle.Offset
             + sgn * (1 - 2 * (((k) % 2))) * Kinematic_Rectangle.Polygone_Normals.transpose() * R_Theta_f_km1
-                  * Eigen::Vector2d{0, l_};
+                  * Eigen::Vector2d{0, l};
 
     Normal_Vec.push_back(Kinematic_Rectangle.Polygone_Normals.transpose());
     cstr_vec.push_back(bcstr);
@@ -370,13 +364,16 @@ Footsteps_plan FootStepGen::compute_plan()
     // const Eigen::Matrix2d R_sup_1 =  plan_.steps_PTpose()[0].rotation().block(0,0,2,2).transpose();
     const Eigen::Vector2d coeff = A.inverse() * (plan_.steps_pose()[0].segment(0,2) - plan_.support_foot().pose());
     intersec = plan_.support_foot().pose() + R_sup_0 * Eigen::Vector2d{1,0} * coeff(0);
-    double proj = (plan_.steps_pose()[0].segment(0,2) - plan_.support_foot().pose()).transpose() * (intersec - plan_.support_foot().pose());
+    const double proj = (plan_.steps_pose()[0].segment(0,2) - plan_.support_foot().pose()).normalized().transpose() * (intersec - plan_.support_foot().pose());
 
-    r = (intersec - plan_.support_foot().pose()) - (plan_.steps_pose()[0].segment(0,2) - plan_.support_foot().pose()) * proj;
-    if( r.x() > 0 && r.norm() < 1)
+    r = (intersec - plan_.support_foot().pose()) - (plan_.steps_pose()[0].segment(0,2) - plan_.support_foot().pose()).normalized() * proj;
+    if((R_sup_0.transpose() * r).x() > 0 && r.norm() < 5)
     {
-      mc_rtc::log::warning("[Footsteps planner] Potential Legs collision, the next step will keep the support foot orientation");
-      plan_.edit(Footstep(Eigen::Vector2d{XY(0), XY(1)}, plan_.support_foot().ori(), StepsTimings_[0],Eigen::Vector2d{0.1, 0.1}),0);
+      mc_rtc::log::warning("[Footsteps planner] Potential Legs collision");
+      // Eigen::Vector2d step_pose = plan_.steps_PTpose()[0].translation().segment(0,2) + R_sup_1.transpose() * Eigen::Vector2d{0,sgn * 0.1};
+      // plan_.edit(Footstep(step_pose, (plan_.steps()[0]).ori_, StepsTimings_[0],Eigen::Vector2d{0.1, 0.1}),0);
+      plan_.edit(Footstep(plan_.steps()[0].pose_, plan_.support_foot().ori(), StepsTimings_[0],Eigen::Vector2d{0.1, 0.1}),0);
+
     }
   }
 
