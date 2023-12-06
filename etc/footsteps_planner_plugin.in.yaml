@@ -7,4 +7,4 @@ feet_distance: 0.17
 mean_speed: 0.1
 robot_height: 150
 max_rotation: 0.32
-offset_angle_deg: 10
+offset_angle_deg: 0

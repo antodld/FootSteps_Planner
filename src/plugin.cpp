@@ -7,18 +7,13 @@ footsteps_planner_plugin::~footsteps_planner_plugin() = default;
 
 void footsteps_planner_plugin::init(mc_control::MCGlobalController & controller, const mc_rtc::Configuration & config)
 {
-  config_ = config;
+  config_.load(config);
   reset(controller);
 }
 
 void footsteps_planner_plugin::reset(mc_control::MCGlobalController & controller)
 {
-  const auto & config = config_;
-  if(controller.controller().datastore().has("footsteps_planner::planner_config"))
-  {
-    return;
-  }
-  controller.controller().datastore().make<mc_rtc::Configuration>("footsteps_planner::planner_config");
+
   controller.controller().datastore().make<std::vector<sva::MotionVecd>>("footsteps_planner::input_vel");
   controller.controller().datastore().make<std::vector<sva::PTransformd>>("footsteps_planner::input_ref_pose");
   controller.controller().datastore().make<std::vector<double>>("footsteps_planner::input_time_steps");
@@ -28,24 +23,23 @@ void footsteps_planner_plugin::reset(mc_control::MCGlobalController & controller
   controller.controller().datastore().make<std::vector<double>>("footsteps_planner::output_time_steps");
 
   auto & ctl = controller.controller();
-  controller.controller().datastore().make_call("footstep_planner::compute_plan",
+  controller.controller().datastore().make_call("footsteps_planner::compute_plan",
                                                 [this, &ctl]() { compute_footsteps_plan(ctl); });
   controller.controller().datastore().make_call(
-      "footstep_planner::configure",
-      [this](const mc_rtc::Configuration & config) { planner_ = mc_plugin::footsteps_planner::FootStepGen(config); });
+      "footsteps_planner::configure",
+      [this](const mc_rtc::Configuration & config) {config_.load(config) ; planner_ = mc_plugin::footsteps_planner::FootStepGen(config_); });
 
   if(controller.controller().config().has("footsteps_planner"))
   {
-    planner_ = mc_plugin::footsteps_planner::FootStepGen(controller.controller().config()("footsteps_planner"));
+    config_.load(controller.controller().config()("footsteps_planner"));
     if(controller.controller().config()("footsteps_planner").has("centered_trajectory"))
     {
       centered_ref_trajectory_ = controller.controller().config()("footsteps_planner")("centered_trajectory");
     }
   }
-  else
-  {
-    planner_ = mc_plugin::footsteps_planner::FootStepGen(config);
-  }
+
+  planner_ = mc_plugin::footsteps_planner::FootStepGen(config_);
+  
   gui(controller);
 }
 
