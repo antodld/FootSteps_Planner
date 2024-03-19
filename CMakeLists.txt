@@ -6,6 +6,7 @@ set(PROJECT_URL "")
 set(PROJECT_VERSION 0.0.1)
 set(PROJECT_USE_CMAKE_EXPORT FALSE)
 set(CMAKE_CXX_STANDARD 11)
+set(CXX_DISABLE_WERROR True)
 
 include(cmake/base.cmake)
 
